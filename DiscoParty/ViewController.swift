@@ -14,12 +14,34 @@ import AVFoundation
  This ViewController unifies the camera and file storage models with the user/facing views.
  */
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
 
     /*
      This is the top view where the image preview is shown.
     */
     @IBOutlet weak var pictureView: UIView!
+    
+    /*
+     The hue shift value. This is between 0 and 1
+     Swift doesn't have atomic variables, so I've had to make my own.
+    */
+    
+    private var _hueShift : CGFloat = 0
+    private let hueMutex = PThreadMutex()
+    
+    var hueShift : CGFloat {
+        get {
+            return hueMutex.sync {
+                return _hueShift
+            }
+        }
+        
+        set {
+            hueMutex.sync {
+                _hueShift = newValue
+            }
+        }
+    }
     
     /*
      The session object mediates our interaction with the camera.
@@ -29,7 +51,11 @@ class ViewController: UIViewController {
     //This is the output we use to take final photos.
     let photoOutput = AVCapturePhotoOutput()
     //Here's the output we use to preview frames.
-    let previewOutput = AVCaptureVideoDataOutputSampleBufferDelegate()
+    let previewOutput = AVCaptureVideoDataOutput()
+    //Process the preview images on this queue
+    let previewDispatchQueue = DispatchQueue(label: "Preview Processing")
+    let previewColorist = Colorist()
+    let previewRenderingContext = CIContext(options: nil)
     
     /*
      Sets up the above session to capture stills.
@@ -47,10 +73,18 @@ class ViewController: UIViewController {
         
         session.addInput(input)
         
+        //delegate the output to this object
+        previewOutput.setSampleBufferDelegate(self, queue: previewDispatchQueue)
+        
         session.addOutput(photoOutput)
+        session.addOutput(previewOutput)
         
         //Set the background color to black to indiciate that view capture is ready to go
         pictureView.backgroundColor = UIColor.black
+        
+        session.startRunning()
+        
+        hueShift = 0.5
     }
     
     /*
@@ -91,6 +125,25 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+    /*
+     Preview output callback. Here we get data buffers and then need to process and display them.
+    */
+    func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+        //get the video buffer from the sample buffer, which contains (potentially) audio and video
+        let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
+        let gpuImage = CIImage(cvImageBuffer: imageBuffer)
+        
+        //colorize the image and dispatch to main
+        let result = previewColorist.colorize(image: gpuImage, shiftHueBy: hueShift)
+        
+        
+        let rendered = previewRenderingContext.createCGImage(result, from: result.extent)!
+        
+        //dispatch result to main
+        DispatchQueue.main.async {
+            self.pictureView.layer.contents = rendered
+        }
+    }
 
 }
 

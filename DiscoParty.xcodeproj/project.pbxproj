@@ -12,6 +12,9 @@
 		A32D7FFD1DCD92CE00D7BC17 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A32D7FFB1DCD92CE00D7BC17 /* Main.storyboard */; };
 		A32D7FFF1DCD92CE00D7BC17 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A32D7FFE1DCD92CE00D7BC17 /* Assets.xcassets */; };
 		A32D80021DCD92CE00D7BC17 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A32D80001DCD92CE00D7BC17 /* LaunchScreen.storyboard */; };
+		A32D800A1DCDAA7400D7BC17 /* HueTransformer.shader in Resources */ = {isa = PBXBuildFile; fileRef = A32D80091DCDAA7400D7BC17 /* HueTransformer.shader */; };
+		A32D800C1DCDAACA00D7BC17 /* Colorist.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800B1DCDAACA00D7BC17 /* Colorist.swift */; };
+		A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +25,9 @@
 		A32D7FFE1DCD92CE00D7BC17 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A32D80011DCD92CE00D7BC17 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A32D80031DCD92CE00D7BC17 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A32D80091DCDAA7400D7BC17 /* HueTransformer.shader */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = HueTransformer.shader; sourceTree = "<group>"; };
+		A32D800B1DCDAACA00D7BC17 /* Colorist.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Colorist.swift; sourceTree = "<group>"; };
+		A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CwlMutex.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -38,6 +44,7 @@
 		A32D7FEB1DCD92CE00D7BC17 = {
 			isa = PBXGroup;
 			children = (
+				A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */,
 				A32D7FF61DCD92CE00D7BC17 /* DiscoParty */,
 				A32D7FF51DCD92CE00D7BC17 /* Products */,
 			);
@@ -56,10 +63,12 @@
 			children = (
 				A32D7FF71DCD92CE00D7BC17 /* AppDelegate.swift */,
 				A32D7FF91DCD92CE00D7BC17 /* ViewController.swift */,
+				A32D800B1DCDAACA00D7BC17 /* Colorist.swift */,
 				A32D7FFB1DCD92CE00D7BC17 /* Main.storyboard */,
 				A32D7FFE1DCD92CE00D7BC17 /* Assets.xcassets */,
 				A32D80001DCD92CE00D7BC17 /* LaunchScreen.storyboard */,
 				A32D80031DCD92CE00D7BC17 /* Info.plist */,
+				A32D80091DCDAA7400D7BC17 /* HueTransformer.shader */,
 			);
 			path = DiscoParty;
 			sourceTree = "<group>";
@@ -127,6 +136,7 @@
 				A32D80021DCD92CE00D7BC17 /* LaunchScreen.storyboard in Resources */,
 				A32D7FFF1DCD92CE00D7BC17 /* Assets.xcassets in Resources */,
 				A32D7FFD1DCD92CE00D7BC17 /* Main.storyboard in Resources */,
+				A32D800A1DCDAA7400D7BC17 /* HueTransformer.shader in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,6 +148,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A32D7FFA1DCD92CE00D7BC17 /* ViewController.swift in Sources */,
+				A32D800C1DCDAACA00D7BC17 /* Colorist.swift in Sources */,
+				A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */,
 				A32D7FF81DCD92CE00D7BC17 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -300,6 +312,7 @@
 				A32D80081DCD92CF00D7BC17 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
