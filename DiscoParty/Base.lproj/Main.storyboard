@@ -38,9 +38,14 @@
                                             <action selector="hueShiftChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="ycL-gJ-uGg"/>
                                         </connections>
                                     </slider>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TN0-rl-I2i">
-                                        <rect key="frame" x="330" y="12" width="33" height="30"/>
-                                        <state key="normal" title="Take"/>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TN0-rl-I2i">
+                                        <rect key="frame" x="328" y="12" width="35" height="35"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="35" id="6wW-qM-ITW"/>
+                                            <constraint firstAttribute="height" constant="35" id="FKu-rR-Bd3"/>
+                                        </constraints>
+                                        <state key="normal" title="Take" image="CameraButton"/>
+                                        <state key="highlighted" image="CameraButtonDepressed"/>
                                         <connections>
                                             <action selector="takePicture:" destination="BYZ-38-t0r" eventType="touchUpInside" id="TNq-NB-qOR"/>
                                         </connections>
@@ -68,6 +73,7 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="controlsView" destination="6GE-YJ-Nwq" id="DiU-ZI-Z5w"/>
                         <outlet property="pictureView" destination="FPm-s5-44I" id="14Q-Oz-2eA"/>
                     </connections>
                 </viewController>
@@ -76,4 +82,8 @@
             <point key="canvasLocation" x="136.80000000000001" y="138.98050974512745"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="CameraButton" width="35" height="35"/>
+        <image name="CameraButtonDepressed" width="35" height="35"/>
+    </resources>
 </document>

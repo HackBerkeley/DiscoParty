@@ -26,6 +26,12 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     var pictureViewRenderView : UIView? {return metalView}
     
     /*
+     The controls view contains our tirgger button and color selector.
+    */
+    
+    @IBOutlet weak var controlsView: UIView!
+    
+    /*
      Setup metal utils for drawing
      We can use the same renderingContext in multiple threads because it's thread safe according to the documentaiton.
      */
@@ -131,8 +137,18 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         pictureView.backgroundColor = UIColor.red //set to red to indicate there's been an error
     }
     
+    /*
+     Setup the controls view the appropriate graphic stylings.
+    */
+    private func configureControlsView() {
+        controlsView.backgroundColor = UIColor.black
+        controlsView.tintColor = UIColor.white
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        configureControlsView()
         
         //Setup GL view as subview of picture view
         if let subview = pictureViewRenderView {
