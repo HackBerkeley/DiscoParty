@@ -9,6 +9,7 @@
 import UIKit
 import AVFoundation
 import GLKit
+import MetalKit
 
 /*
  Since our application is only one view, the ViewController class is the heart of our application.
@@ -21,7 +22,24 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
      This is the top view where the image preview is shown.
     */
     @IBOutlet weak var pictureView: UIView!
-    let glView = CIGLView(frame: CGRect(x: 0, y: 0, width: 128, height:128), context: EAGLContext(api: .openGLES2))
+    
+    var pictureViewRenderView : UIView? {return metalView}
+    
+    /* Setup metal utils for drawing */
+    let (metalDevice, metalView, previewRenderingContext, previewCommandQueue, colorSpace) : (MTLDevice, MTKView, CIContext, MTLCommandQueue, CGColorSpace) = {
+        let device =  MTLCreateSystemDefaultDevice()!
+        
+        let view = MTKView(frame: CGRect(x: 0, y: 0, width: 100, height: 100), device: device)
+        view.isPaused = true
+        view.enableSetNeedsDisplay = false
+        view.framebufferOnly = false
+        
+        let context = CIContext(mtlDevice: device)
+        
+        let queue = device.makeCommandQueue()
+        
+        return (device, view, context, queue, CGColorSpaceCreateDeviceRGB())
+    }()
     
     /*
      The hue shift value. This is between 0 and 1
@@ -62,8 +80,6 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     //Process the preview images on this queue
     let previewDispatchQueue = DispatchQueue(label: "Preview Processing")
     let previewProcessor = ImageProcessor()
-    let previewRenderingContext = CIContext(options: nil)
-    
     /*
      Sets up the above session to capture stills.
      Pre-condition: Authorization granted to the camera.
@@ -87,7 +103,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         session.addOutput(previewOutput)
         
         //Set the background color to black to indiciate that view capture is ready to go
-        pictureView.backgroundColor = UIColor.black
+        pictureView.backgroundColor = UIColor.blue
         
         session.startRunning()
         
@@ -105,11 +121,12 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         super.viewDidLoad()
         
         //Setup GL view as subview of picture view
-        pictureView.addSubview(glView)
-        let constraints = NSLayoutConstraint.constraints(withVisualFormat: "H:|[gl]|", options: [], metrics: nil, views: ["gl": glView]) + NSLayoutConstraint.constraints(withVisualFormat: "V:|[gl]|", options: [], metrics: nil, views: ["gl": glView])
-        pictureView.translatesAutoresizingMaskIntoConstraints = false
-        glView.translatesAutoresizingMaskIntoConstraints = false
-        pictureView.addConstraints(constraints)
+        if let subview = pictureViewRenderView {
+            pictureView.addSubview(subview)
+            let constraints = NSLayoutConstraint.constraints(withVisualFormat: "H:|[gl]|", options: [], metrics: nil, views: ["gl": subview]) + NSLayoutConstraint.constraints(withVisualFormat: "V:|[gl]|", options: [], metrics: nil, views: ["gl": subview])
+            subview.translatesAutoresizingMaskIntoConstraints = false
+            pictureView.addConstraints(constraints)
+        }
         
         //We need to ask the user's permission to record video if we don't already have it.
         let authStatus = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo)
@@ -145,18 +162,26 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
      Preview output callback. Here we get data buffers and then need to process and display them.
     */
     func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+        
+        //ensure there's something to draw to in our metal view, otherwise bail
+        guard let drawable = metalView.currentDrawable else {return}
+        
         //get the video buffer from the sample buffer, which contains (potentially) audio and video
         let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
         let gpuImage = CIImage(cvImageBuffer: imageBuffer)
         
         //colorize the image and dispatch to main
         let result = previewProcessor.process(image: gpuImage, shiftHueBy: hueShift)
-                
-        //dispatch result to main
-        DispatchQueue.main.async {
-            self.glView.image = result
-            self.glView.setNeedsDisplay()
-        }
+        
+        let commandBuffer = previewCommandQueue.makeCommandBuffer()
+        previewRenderingContext.render(result, to: drawable.texture, commandBuffer: commandBuffer, bounds: result.extent, colorSpace: colorSpace)
+        
+        commandBuffer.present(drawable)
+        
+        commandBuffer.commit()
+        
+        //draw the metal view
+        self.metalView.draw()
     }
 
 }

@@ -15,7 +15,6 @@
 		A32D800A1DCDAA7400D7BC17 /* HueTransformer.shader in Resources */ = {isa = PBXBuildFile; fileRef = A32D80091DCDAA7400D7BC17 /* HueTransformer.shader */; };
 		A32D800C1DCDAACA00D7BC17 /* ImageProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800B1DCDAACA00D7BC17 /* ImageProcessor.swift */; };
 		A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */; };
-		A32D80101DCDEF9D00D7BC17 /* CIGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800F1DCDEF9D00D7BC17 /* CIGLView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,7 +28,6 @@
 		A32D80091DCDAA7400D7BC17 /* HueTransformer.shader */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = HueTransformer.shader; sourceTree = "<group>"; };
 		A32D800B1DCDAACA00D7BC17 /* ImageProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageProcessor.swift; sourceTree = "<group>"; };
 		A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CwlMutex.swift; sourceTree = "<group>"; };
-		A32D800F1DCDEF9D00D7BC17 /* CIGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CIGLView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,7 +64,6 @@
 				A32D7FF71DCD92CE00D7BC17 /* AppDelegate.swift */,
 				A32D7FF91DCD92CE00D7BC17 /* ViewController.swift */,
 				A32D800B1DCDAACA00D7BC17 /* ImageProcessor.swift */,
-				A32D800F1DCDEF9D00D7BC17 /* CIGLView.swift */,
 				A32D7FFB1DCD92CE00D7BC17 /* Main.storyboard */,
 				A32D7FFE1DCD92CE00D7BC17 /* Assets.xcassets */,
 				A32D80001DCD92CE00D7BC17 /* LaunchScreen.storyboard */,
@@ -150,7 +147,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A32D80101DCDEF9D00D7BC17 /* CIGLView.swift in Sources */,
 				A32D7FFA1DCD92CE00D7BC17 /* ViewController.swift in Sources */,
 				A32D800C1DCDAACA00D7BC17 /* ImageProcessor.swift in Sources */,
 				A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */,
