@@ -171,7 +171,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         let gpuImage = CIImage(cvImageBuffer: imageBuffer)
         
         //colorize the image and dispatch to main
-        let result = previewProcessor.process(image: gpuImage, shiftHueBy: hueShift)
+        let result = previewProcessor.process(image: gpuImage, shiftHueBy: hueShift, targetSideLength: drawable.texture.width)
         
         let commandBuffer = previewCommandQueue.makeCommandBuffer()
         previewRenderingContext.render(result, to: drawable.texture, commandBuffer: commandBuffer, bounds: result.extent, colorSpace: colorSpace)

@@ -17,25 +17,40 @@ import CoreImage
 class ImageProcessor {
     
     //This is the filter that's going to colorize images.
-    let hueFilter = HueShiftFilter()
-    //And one to rotate
-    let rotateFilter : CIFilter = {
-        let result = CIFilter(name: "CIAffineTransform")!
-        //rotate the image 90 cw
-        let transform = CGAffineTransform(rotationAngle: -CGFloat(M_PI_2))
-        let wrapped = NSValue(cgAffineTransform: transform)
-        result.setValue(wrapped, forKey: "inputTransform")
-        
-        return result
-    }()
-    //And another to crop
-    let cropFilter = CIFilter(name: "CICrop")!
+    private let hueFilter = HueShiftFilter()
     
-    func process(image: CIImage, shiftHueBy: Float) -> CIImage {
+    //And one to rotate/scale to the target size
+    private let transformFilter = CIFilter(name: "CIAffineTransform")!
+
+    private func set(transform: CGAffineTransform) {
+        let wrapped = NSValue(cgAffineTransform: transform)
+        transformFilter.setValue(wrapped, forKey: "inputTransform")
+    }
+    
+    //And another to crop
+    private let cropFilter = CIFilter(name: "CICrop")!
+    
+    /*
+     Process the image. Hue shift is 0...1, target side length is the size of the final square image.
+    */
+    func process(image: CIImage, shiftHueBy: Float, targetSideLength: Int? = nil) -> CIImage {
         
-        rotateFilter.setValue(image, forKey: "inputImage")
+        transformFilter.setValue(image, forKey: "inputImage")
         
-        let rotated = rotateFilter.value(forKey: "outputImage") as! CIImage
+        let rotateTransform = CGAffineTransform(rotationAngle: -CGFloat(M_PI_2))
+        
+        if let target = targetSideLength {
+            //set transform with rotation and scale
+            //the final side is going to be min(width, height)
+            let scale = CGFloat(target) / min(image.extent.width, image.extent.height)
+            
+            set(transform: rotateTransform.scaledBy(x: scale, y: scale))
+        } else {
+            //otherwise just rotate
+            set(transform: rotateTransform)
+        }
+        
+        let rotated = transformFilter.value(forKey: "outputImage") as! CIImage
         
         //crop the image to be square
         cropFilter.setValue(rotated, forKey: "inputImage")
@@ -56,7 +71,7 @@ class ImageProcessor {
     }
 }
 
-class HueShiftFilter : CIFilter {
+fileprivate class HueShiftFilter : CIFilter {
     var inputImage : CIImage?
     var inputShift : Float = 0
     
