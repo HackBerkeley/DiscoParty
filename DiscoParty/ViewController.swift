@@ -16,7 +16,7 @@ import MetalKit
  This ViewController unifies the camera and file storage models with the user/facing views.
  */
 
-class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
+class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate, AVCapturePhotoCaptureDelegate {
 
     /*
      This is the top view where the image preview is shown.
@@ -25,8 +25,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     var pictureViewRenderView : UIView? {return metalView}
     
-    /* Setup metal utils for drawing */
-    let (metalDevice, metalView, previewRenderingContext, previewCommandQueue, colorSpace) : (MTLDevice, MTKView, CIContext, MTLCommandQueue, CGColorSpace) = {
+    /*
+     Setup metal utils for drawing
+     We can use the same renderingContext in multiple threads because it's thread safe according to the documentaiton.
+     */
+    let (metalDevice, metalView, renderingContext, previewCommandQueue, colorSpace) : (MTLDevice, MTKView, CIContext, MTLCommandQueue, CGColorSpace) = {
         let device =  MTLCreateSystemDefaultDevice()!
         
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 100, height: 100), device: device)
@@ -71,7 +74,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     /*
      The session object mediates our interaction with the camera.
     */
-    let session = AVCaptureSession()
+    var session : AVCaptureSession!
     
     //This is the output we use to take final photos.
     let photoOutput = AVCapturePhotoOutput()
@@ -80,11 +83,19 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     //Process the preview images on this queue
     let previewDispatchQueue = DispatchQueue(label: "Preview Processing")
     let previewProcessor = ImageProcessor()
+    
+    //We're also going to set up a seperate queue and processor for actually capturing images
+    let captureQueue = DispatchQueue(label: "Capture Processing")
+    let captureProcessor = ImageProcessor()
+    
     /*
      Sets up the above session to capture stills.
      Pre-condition: Authorization granted to the camera.
     */
     private func configureCaptureSession() {
+        
+        session = AVCaptureSession()
+        
         //Get the back camera device from the phone, and throw an error if for some reason the phone doesn't have a camera.
         guard let backCamera = AVCaptureDevice.defaultDevice(withDeviceType: .builtInWideAngleCamera, mediaType: AVMediaTypeVideo, position: .back) else {
             fatalError("Couldn't get the rear camera!")
@@ -99,11 +110,14 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         //delegate the output to this object
         previewOutput.setSampleBufferDelegate(self, queue: previewDispatchQueue)
         
+        photoOutput.isHighResolutionCaptureEnabled = true
         session.addOutput(photoOutput)
+        
         session.addOutput(previewOutput)
         
-        //Set the background color to black to indiciate that view capture is ready to go
-        pictureView.backgroundColor = UIColor.blue
+        //Set the background color to white to indiciate that view capture is ready to go
+        //this will also let us fade out the metal view when we take a picture
+        pictureView.backgroundColor = UIColor.white
         
         session.startRunning()
         
@@ -114,7 +128,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
      Sets up the interface in the event that the user denies authorization.
     */
     private func configureCaptureAuthorizationDenied() {
-        
+        pictureView.backgroundColor = UIColor.red //set to red to indicate there's been an error
     }
     
     override func viewDidLoad() {
@@ -149,6 +163,15 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         default:
             configureCaptureAuthorizationDenied()
         }
+        
+        //get notified when the app sleeps and stop the session
+        NotificationCenter.default.addObserver(forName: .UIApplicationDidEnterBackground, object: nil, queue: nil) {note in
+            self.session.stopRunning()
+        }
+        
+        NotificationCenter.default.addObserver(forName: .UIApplicationWillEnterForeground, object: nil, queue: nil) {note in
+            self.configureCaptureSession()
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -157,7 +180,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     override var prefersStatusBarHidden: Bool {return true}
-
+    
     /*
      Preview output callback. Here we get data buffers and then need to process and display them.
     */
@@ -174,7 +197,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         let result = previewProcessor.process(image: gpuImage, shiftHueBy: hueShift, targetSideLength: drawable.texture.width)
         
         let commandBuffer = previewCommandQueue.makeCommandBuffer()
-        previewRenderingContext.render(result, to: drawable.texture, commandBuffer: commandBuffer, bounds: result.extent, colorSpace: colorSpace)
+        renderingContext.render(result, to: drawable.texture, commandBuffer: commandBuffer, bounds: result.extent, colorSpace: colorSpace)
         
         commandBuffer.present(drawable)
         
@@ -184,5 +207,48 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         self.metalView.draw()
     }
 
+    /*This action triggers taking a picture*/
+    @IBAction func takePicture(_ sender: Any) {
+        let format = photoOutput.availablePhotoPixelFormatTypes[0]
+        let settings = AVCapturePhotoSettings(format: [kCVPixelBufferPixelFormatTypeKey as String : format])
+        settings.isHighResolutionPhotoEnabled = true
+        photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+    
+    /*
+     The OS lets us know it's done capturing the picture. We pass this feedback on to the user in the form of a flash and a camera sound.
+     */
+    
+    func capture(_ captureOutput: AVCapturePhotoOutput, didCapturePhotoForResolvedSettings resolvedSettings: AVCaptureResolvedPhotoSettings) {
+        AudioServicesPlaySystemSound(1108)
+        let totalDuration : CFTimeInterval = 0.25
+        UIView.animate(withDuration: totalDuration / 2, animations: {
+            self.pictureView.alpha = 0
+        }, completion: {done in
+            UIView.animate(withDuration: totalDuration / 2, animations: {
+                self.pictureView.alpha = 1
+            })
+        })
+    }
+    
+    /*
+     When the hardware is done taking the picture, this function is called back to. Then we can process the image on another queue.
+    */
+    func capture(_ captureOutput: AVCapturePhotoOutput, didFinishProcessingPhotoSampleBuffer photoSampleBuffer: CMSampleBuffer?, previewPhotoSampleBuffer: CMSampleBuffer?, resolvedSettings: AVCaptureResolvedPhotoSettings, bracketSettings: AVCaptureBracketedStillImageSettings?, error: Error?) {
+        
+        captureQueue.async {
+            let imageBuffer = CMSampleBufferGetImageBuffer(photoSampleBuffer!)!
+            let gpuImage = CIImage(cvImageBuffer: imageBuffer)
+            
+            let result = self.captureProcessor.process(image: gpuImage, shiftHueBy: self.hueShift)
+            
+            let rendered = self.renderingContext.createCGImage(result, from: result.extent)!
+            
+            let image = UIImage(cgImage: rendered)
+            
+            //render out the result with metal
+            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        }
+    }
 }
 
