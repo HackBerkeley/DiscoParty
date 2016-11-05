@@ -8,6 +8,7 @@
 
 import UIKit
 import AVFoundation
+import GLKit
 
 /*
  Since our application is only one view, the ViewController class is the heart of our application.
@@ -20,16 +21,17 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
      This is the top view where the image preview is shown.
     */
     @IBOutlet weak var pictureView: UIView!
+    let glView = CIGLView(frame: CGRect(x: 0, y: 0, width: 128, height:128), context: EAGLContext(api: .openGLES2))
     
     /*
      The hue shift value. This is between 0 and 1
      Swift doesn't have atomic variables, so I've had to make my own.
     */
     
-    private var _hueShift : CGFloat = 0
+    private var _hueShift : Float = 0
     private let hueMutex = PThreadMutex()
     
-    var hueShift : CGFloat {
+    var hueShift : Float {
         get {
             return hueMutex.sync {
                 return _hueShift
@@ -43,6 +45,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
     
+    @IBAction func hueShiftChanged(_ sender: UISlider) {
+        hueShift = sender.value
+    }
+    
+    
     /*
      The session object mediates our interaction with the camera.
     */
@@ -54,7 +61,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     let previewOutput = AVCaptureVideoDataOutput()
     //Process the preview images on this queue
     let previewDispatchQueue = DispatchQueue(label: "Preview Processing")
-    let previewColorist = Colorist()
+    let previewProcessor = ImageProcessor()
     let previewRenderingContext = CIContext(options: nil)
     
     /*
@@ -97,6 +104,13 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        //Setup GL view as subview of picture view
+        pictureView.addSubview(glView)
+        let constraints = NSLayoutConstraint.constraints(withVisualFormat: "H:|[gl]|", options: [], metrics: nil, views: ["gl": glView]) + NSLayoutConstraint.constraints(withVisualFormat: "V:|[gl]|", options: [], metrics: nil, views: ["gl": glView])
+        pictureView.translatesAutoresizingMaskIntoConstraints = false
+        glView.translatesAutoresizingMaskIntoConstraints = false
+        pictureView.addConstraints(constraints)
+        
         //We need to ask the user's permission to record video if we don't already have it.
         let authStatus = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo)
         switch authStatus {
@@ -124,6 +138,8 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
+    
+    override var prefersStatusBarHidden: Bool {return true}
 
     /*
      Preview output callback. Here we get data buffers and then need to process and display them.
@@ -134,14 +150,12 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         let gpuImage = CIImage(cvImageBuffer: imageBuffer)
         
         //colorize the image and dispatch to main
-        let result = previewColorist.colorize(image: gpuImage, shiftHueBy: hueShift)
-        
-        
-        let rendered = previewRenderingContext.createCGImage(result, from: result.extent)!
-        
+        let result = previewProcessor.process(image: gpuImage, shiftHueBy: hueShift)
+                
         //dispatch result to main
         DispatchQueue.main.async {
-            self.pictureView.layer.contents = rendered
+            self.glView.image = result
+            self.glView.setNeedsDisplay()
         }
     }
 

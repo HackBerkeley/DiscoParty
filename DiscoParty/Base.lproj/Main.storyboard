@@ -31,7 +31,20 @@
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="6GE-YJ-Nwq">
                                 <rect key="frame" x="0.0" y="375" width="375" height="292"/>
+                                <subviews>
+                                    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="lAw-3f-vOD">
+                                        <rect key="frame" x="6" y="131" width="363" height="31"/>
+                                        <connections>
+                                            <action selector="hueShiftChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="ycL-gJ-uGg"/>
+                                        </connections>
+                                    </slider>
+                                </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstItem="lAw-3f-vOD" firstAttribute="centerY" secondItem="6GE-YJ-Nwq" secondAttribute="centerY" id="IGg-ai-crE"/>
+                                    <constraint firstAttribute="trailing" secondItem="lAw-3f-vOD" secondAttribute="trailing" constant="8" id="PYT-Z2-pxB"/>
+                                    <constraint firstItem="lAw-3f-vOD" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" constant="8" id="x4M-bw-jTo"/>
+                                </constraints>
                             </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
