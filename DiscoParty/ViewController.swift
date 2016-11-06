@@ -232,6 +232,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     /*
      Preview output callback. Here we get data buffers and then need to process and display them.
+     This method is called on the preview queue as specified. Since we set the Metal view to only update manually, we can also update the Metal view from this other thread.
     */
     func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
         
@@ -285,6 +286,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     */
     func capture(_ captureOutput: AVCapturePhotoOutput, didFinishProcessingPhotoSampleBuffer photoSampleBuffer: CMSampleBuffer?, previewPhotoSampleBuffer: CMSampleBuffer?, resolvedSettings: AVCaptureResolvedPhotoSettings, bracketSettings: AVCaptureBracketedStillImageSettings?, error: Error?) {
         
+        /*
+         Spin the capture process out to a different queue. There's no reason you couldn't do this on the main thead, but it might cause lag since final captured images are generally fairly large.
+        */
         captureQueue.async {
             let imageBuffer = CMSampleBufferGetImageBuffer(photoSampleBuffer!)!
             let gpuImage = CIImage(cvImageBuffer: imageBuffer)
