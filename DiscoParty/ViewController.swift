@@ -12,6 +12,21 @@ import GLKit
 import MetalKit
 
 /*
+ Utility function to get camera inputs.
+ */
+
+fileprivate func generateCameraInput(position: AVCaptureDevicePosition) -> AVCaptureDeviceInput {
+    //Get the camera at position
+    let backCamera = AVCaptureDevice.defaultDevice(withDeviceType: .builtInWideAngleCamera, mediaType: AVMediaTypeVideo, position: position)
+    
+    //try! is sketchy because we ignore error handing, but I'm allowing it because demo app.
+    //"Wrap" the device in an input object. This is just how Apple designed the API.
+    let input = try! AVCaptureDeviceInput(device: backCamera)
+    
+    return input
+}
+
+/*
  Since our application is only one view, the ViewController class is the heart of our application.
  This ViewController unifies the camera and file storage models with the user/facing views.
  */
@@ -23,7 +38,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     */
     @IBOutlet weak var pictureView: UIView!
     
-    var pictureViewRenderView : UIView? {return metalView}
+    private var pictureViewRenderView : UIView? {return metalView}
     
     /*
      The controls view contains our tirgger button and color selector.
@@ -79,8 +94,35 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     /*
      The session object mediates our interaction with the camera.
+     The inputs are the various camera inputs we can add to it
     */
-    var session : AVCaptureSession!
+    private var session : AVCaptureSession!
+    
+    private let backCameraInput = generateCameraInput(position: .back)
+    private let frontCameraInput = generateCameraInput(position: .front)
+    
+    private var currentCameraInput : AVCaptureDeviceInput?
+    
+    private func setCamera(input: AVCaptureDeviceInput) {
+        if let curr = currentCameraInput {
+            session.removeInput(curr)
+        }
+        
+        session.addInput(input)
+        currentCameraInput = input
+    }
+    
+    private func flipCamera() {
+        if currentCameraInput == backCameraInput {
+            setCamera(input: frontCameraInput)
+        } else {
+            setCamera(input: backCameraInput)
+        }
+    }
+    
+    @IBAction func flipCamera(_ sender: Any) {
+        flipCamera()
+    }
     
     //This is the output we use to take final photos.
     let photoOutput = AVCapturePhotoOutput()
@@ -102,16 +144,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         session = AVCaptureSession()
         
-        //Get the back camera device from the phone, and throw an error if for some reason the phone doesn't have a camera.
-        guard let backCamera = AVCaptureDevice.defaultDevice(withDeviceType: .builtInWideAngleCamera, mediaType: AVMediaTypeVideo, position: .back) else {
-            fatalError("Couldn't get the rear camera!")
-        }
-        
-        //try! is sketchy because we ignore error handing, but I'm allowing it because demo app.
-        //"Wrap" the device in an input object. This is just how Apple designed the API.
-        let input = try! AVCaptureDeviceInput(device: backCamera)
-        
-        session.addInput(input)
+        setCamera(input: backCameraInput)
         
         //delegate the output to this object
         previewOutput.setSampleBufferDelegate(self, queue: previewDispatchQueue)

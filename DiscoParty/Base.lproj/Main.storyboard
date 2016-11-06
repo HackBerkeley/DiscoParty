@@ -50,6 +50,17 @@
                                             <action selector="takePicture:" destination="BYZ-38-t0r" eventType="touchUpInside" id="TNq-NB-qOR"/>
                                         </connections>
                                     </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" showsTouchWhenHighlighted="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7vJ-X2-DQc">
+                                        <rect key="frame" x="12" y="12" width="35" height="35"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="35" id="jdr-CK-Y7v"/>
+                                            <constraint firstAttribute="width" constant="35" id="kT1-wn-GiS"/>
+                                        </constraints>
+                                        <state key="normal" title="Take" image="FlipCamera"/>
+                                        <connections>
+                                            <action selector="flipCamera:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Nqa-Pt-nhy"/>
+                                        </connections>
+                                    </button>
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
@@ -57,6 +68,8 @@
                                     <constraint firstAttribute="trailing" secondItem="lAw-3f-vOD" secondAttribute="trailing" constant="8" id="PYT-Z2-pxB"/>
                                     <constraint firstItem="TN0-rl-I2i" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="Z68-Uz-u5i"/>
                                     <constraint firstAttribute="trailing" secondItem="TN0-rl-I2i" secondAttribute="trailing" constant="12" id="Zjg-pD-eNd"/>
+                                    <constraint firstItem="7vJ-X2-DQc" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="i48-8y-eoF"/>
+                                    <constraint firstItem="7vJ-X2-DQc" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" constant="12" id="o5U-sz-LuJ"/>
                                     <constraint firstItem="lAw-3f-vOD" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" constant="8" id="x4M-bw-jTo"/>
                                 </constraints>
                             </view>
@@ -85,5 +98,6 @@
     <resources>
         <image name="CameraButton" width="35" height="35"/>
         <image name="CameraButtonDepressed" width="35" height="35"/>
+        <image name="FlipCamera" width="35" height="35"/>
     </resources>
 </document>
