@@ -8,6 +8,11 @@
 
 import Foundation
 
+/*
+ This data structure implements a 1-buffer operations cycle.
+ SingleBufferQueue executes the first operation given. While said operation is executing, only the most recent operation submitted to the queue is stored. When the first operation completes, the queue removes from storage and executes the stored operation, if it exists.
+ */
+
 class SingleBufferQueue {
     
     typealias Block = ()->Void
