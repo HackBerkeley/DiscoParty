@@ -8,8 +8,11 @@
 
 import UIKit
 import AVFoundation
-import GLKit
-import MetalKit
+#if IOS_SIMULATOR
+    import GLKit
+#else
+    import MetalKit
+#endif
 
 /*
  Utility function to get camera inputs.
@@ -17,11 +20,11 @@ import MetalKit
 
 fileprivate func generateCameraInput(position: AVCaptureDevicePosition) -> AVCaptureDeviceInput {
     //Get the camera at position
-    let backCamera = AVCaptureDevice.defaultDevice(withDeviceType: .builtInWideAngleCamera, mediaType: AVMediaTypeVideo, position: position)
+    let camera = AVCaptureDevice.defaultDevice(withDeviceType: .builtInWideAngleCamera, mediaType: AVMediaTypeVideo, position: position)!
     
     //try! is sketchy because we ignore error handing, but I'm allowing it because demo app.
     //"Wrap" the device in an input object. This is just how Apple designed the API.
-    let input = try! AVCaptureDeviceInput(device: backCamera)
+    let input = try! AVCaptureDeviceInput(device: camera)
     
     return input
 }
@@ -38,7 +41,13 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     */
     @IBOutlet weak var pictureView: UIView!
     
-    private var pictureViewRenderView : UIView? {return metalView}
+    private var pictureViewRenderView : UIView? {
+        #if IOS_SIMULATOR
+            return glView
+        #else
+            return metalView
+        #endif
+    }
     
     /*
      The controls view contains our tirgger button and color selector.
@@ -46,6 +55,22 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     @IBOutlet weak var controlsView: UIView!
     
+    #if IOS_SIMULATOR
+    /*
+        Set up GL utils for drawing
+    */
+    let (glView, renderingContext, colorSpace) : (GLKView, CIContext, CGColorSpace) = {
+        
+        let glContext = EAGLContext(api: .openGLES2)!
+        
+        let view = GLKView(frame: CGRect(x: 0, y: 0, width: 100, height: 100), context: glContext)
+        view.enableSetNeedsDisplay = false
+        
+        let context = CIContext(eaglContext: glContext)
+        
+        return (view, context, CGColorSpaceCreateDeviceRGB())
+    }()
+    #else
     /*
      Setup metal utils for drawing
      We can use the same renderingContext in multiple threads because it's thread safe according to the documentaiton.
@@ -64,6 +89,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         return (device, view, context, queue, CGColorSpaceCreateDeviceRGB())
     }()
+    #endif
     
     /*
      The hue shift value. This is between 0 and 1
@@ -91,13 +117,23 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         hueShift = sender.value
     }
     
+    //Process the preview images on this queue
+    let previewDispatchQueue = DispatchQueue(label: "Preview Processing")
+    let previewProcessor = ImageProcessor()
+    
+    //We're also going to set up a seperate queue and processor for actually capturing images
+    let captureQueue = DispatchQueue(label: "Capture Processing")
+    let captureProcessor = ImageProcessor()
+    
+    //There is no camera on the simulator, and therefore no need to set up any capture.
+    #if !IOS_SIMULATOR
     
     /*
      The session object mediates our interaction with the camera.
      The inputs are the various camera inputs we can add to it
     */
     private var session : AVCaptureSession!
-    
+
     private let backCameraInput = generateCameraInput(position: .back)
     private let frontCameraInput = generateCameraInput(position: .front)
     
@@ -120,21 +156,10 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
     
-    @IBAction func flipCamera(_ sender: Any) {
-        flipCamera()
-    }
-    
     //This is the output we use to take final photos.
     let photoOutput = AVCapturePhotoOutput()
     //Here's the output we use to preview frames.
     let previewOutput = AVCaptureVideoDataOutput()
-    //Process the preview images on this queue
-    let previewDispatchQueue = DispatchQueue(label: "Preview Processing")
-    let previewProcessor = ImageProcessor()
-    
-    //We're also going to set up a seperate queue and processor for actually capturing images
-    let captureQueue = DispatchQueue(label: "Capture Processing")
-    let captureProcessor = ImageProcessor()
     
     /*
      Sets up the above session to capture stills.
@@ -170,6 +195,8 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         pictureView.backgroundColor = UIColor.red //set to red to indicate there's been an error
     }
     
+    #endif
+    
     /*
      Setup the controls view the appropriate graphic stylings.
     */
@@ -191,6 +218,13 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             pictureView.addConstraints(constraints)
         }
         
+        #if IOS_SIMULATOR
+        //blast the image buffer into the preview at 30fps
+        Timer.scheduledTimer(withTimeInterval: 1/30, repeats: true) {timer in
+            self.captureOutput(nil, didOutputSampleBuffer: self.testBuffer, from: nil)
+        }
+        
+        #else
         //We need to ask the user's permission to record video if we don't already have it.
         let authStatus = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo)
         switch authStatus {
@@ -221,6 +255,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         NotificationCenter.default.addObserver(forName: .UIApplicationWillEnterForeground, object: nil, queue: nil) {note in
             self.configureCaptureSession()
         }
+        #endif
     }
 
     override func didReceiveMemoryWarning() {
@@ -230,39 +265,105 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
     override var prefersStatusBarHidden: Bool {return true}
     
+    @IBAction func flipCamera(_ sender: Any) {
+        #if !IOS_SIMULATOR
+            flipCamera()
+        #endif
+    }
+    
     /*
      Preview output callback. Here we get data buffers and then need to process and display them.
      This method is called on the preview queue as specified. Since we set the Metal view to only update manually, we can also update the Metal view from this other thread.
     */
     func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
         
-        //ensure there's something to draw to in our metal view, otherwise bail
-        guard let drawable = metalView.currentDrawable else {return}
+        #if IOS_SIMULATOR
+            let side = glView.drawableWidth
+        #else
+            //ensure there's something to draw to in our metal view, otherwise bail
+            guard let drawable = metalView.currentDrawable else {return}
+            
+            let side = drawable.texture.width
+        #endif
         
         //get the video buffer from the sample buffer, which contains (potentially) audio and video
         let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)!
         let gpuImage = CIImage(cvImageBuffer: imageBuffer)
         
         //colorize the image and dispatch to main
-        let result = previewProcessor.process(image: gpuImage, shiftHueBy: hueShift, targetSideLength: drawable.texture.width)
+        let result = previewProcessor.process(image: gpuImage, shiftHueBy: hueShift, targetSideLength: side)
         
-        let commandBuffer = previewCommandQueue.makeCommandBuffer()
-        renderingContext.render(result, to: drawable.texture, commandBuffer: commandBuffer, bounds: result.extent, colorSpace: colorSpace)
-        
-        commandBuffer.present(drawable)
-        
-        commandBuffer.commit()
-        
-        //draw the metal view
-        self.metalView.draw()
+        #if IOS_SIMULATOR
+            let drawInRect : CGRect = {
+                var rect = glView.bounds
+                rect.size.width *= glView.contentScaleFactor
+                rect.size.height *= glView.contentScaleFactor
+                return rect
+            }()
+            renderingContext.draw(result, in: drawInRect, from: result.extent)
+        #else
+            let commandBuffer = previewCommandQueue.makeCommandBuffer()
+            renderingContext.render(result, to: drawable.texture, commandBuffer: commandBuffer, bounds: result.extent, colorSpace: colorSpace)
+            
+            commandBuffer.present(drawable)
+            
+            commandBuffer.commit()
+            
+            //draw the metal view
+            self.metalView.draw()
+        #endif
     }
+    
+    #if IOS_SIMULATOR
+    let testBuffer : CMSampleBuffer = {
+        let image = #imageLiteral(resourceName: "TestImage").cgImage!
+        
+        let options : [String : NSNumber] = [kCVPixelBufferCGImageCompatibilityKey as String: true, kCVPixelBufferCGBitmapContextCompatibilityKey as String: true]
+        
+        var pixelBuffer : CVPixelBuffer? = nil
+        _ = CVPixelBufferCreate(kCFAllocatorDefault, image.width, image.height, kCVPixelFormatType_32ARGB, options as CFDictionary, &pixelBuffer)
+        
+        CVPixelBufferLockBaseAddress(pixelBuffer!, [])
+        
+        let pxData = CVPixelBufferGetBaseAddress(pixelBuffer!)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        
+        let bitmapInfo:CGBitmapInfo = [.byteOrder32Little, CGBitmapInfo(rawValue: ~CGBitmapInfo.alphaInfoMask.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue)]
+        let context = CGContext(data: pxData, width: image.width, height: image.height, bitsPerComponent: 8, bytesPerRow:
+            CVPixelBufferGetBytesPerRow(pixelBuffer!), space: colorSpace, bitmapInfo: bitmapInfo.rawValue)
+        
+        context?.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        
+        CVPixelBufferUnlockBaseAddress(pixelBuffer!, [])
+        
+        var photoBuffer : CMSampleBuffer? = nil
+        var description : CMFormatDescription?
+        
+        let extensions : [String : NSNumber] = [kCMFormatDescriptionExtension_BytesPerRow as String : NSNumber(value: CVPixelBufferGetBytesPerRow(pixelBuffer!))]
+        
+        CMFormatDescriptionCreate(kCFAllocatorDefault, kCMMediaType_Video, .allZeros, extensions as CFDictionary, &description)
+        
+        var timingInfo = kCMTimingInfoInvalid
+        
+        let result = CMSampleBufferCreateReadyWithImageBuffer(kCFAllocatorDefault, pixelBuffer!, description!, &timingInfo, &photoBuffer)
+        
+        return photoBuffer!
+        
+    }()
+    #endif
 
     /*This action triggers taking a picture*/
     @IBAction func takePicture(_ sender: Any) {
-        let format = photoOutput.availablePhotoPixelFormatTypes[0]
-        let settings = AVCapturePhotoSettings(format: [kCVPixelBufferPixelFormatTypeKey as String : format])
-        settings.isHighResolutionPhotoEnabled = true
-        photoOutput.capturePhoto(with: settings, delegate: self)
+        #if IOS_SIMULATOR
+            //on the simulator, simulate taking a picture by passing the test image into the capture routine
+            doShutterAnimation()
+            write(buffer: testBuffer)
+        #else
+            let format = photoOutput.availablePhotoPixelFormatTypes[0]
+            let settings = AVCapturePhotoSettings(format: [kCVPixelBufferPixelFormatTypeKey as String : format])
+            settings.isHighResolutionPhotoEnabled = true
+            photoOutput.capturePhoto(with: settings, delegate: self)
+        #endif
     }
     
     /*
@@ -270,6 +371,10 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
      */
     
     func capture(_ captureOutput: AVCapturePhotoOutput, didCapturePhotoForResolvedSettings resolvedSettings: AVCaptureResolvedPhotoSettings) {
+        doShutterAnimation()
+    }
+    
+    private func doShutterAnimation() {
         AudioServicesPlaySystemSound(1108)
         let totalDuration : CFTimeInterval = 0.25
         UIView.animate(withDuration: totalDuration / 2, animations: {
@@ -286,11 +391,15 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     */
     func capture(_ captureOutput: AVCapturePhotoOutput, didFinishProcessingPhotoSampleBuffer photoSampleBuffer: CMSampleBuffer?, previewPhotoSampleBuffer: CMSampleBuffer?, resolvedSettings: AVCaptureResolvedPhotoSettings, bracketSettings: AVCaptureBracketedStillImageSettings?, error: Error?) {
         
+        write(buffer: photoSampleBuffer!)
+    }
+    
+    private func write(buffer: CMSampleBuffer) {
         /*
          Spin the capture process out to a different queue. There's no reason you couldn't do this on the main thead, but it might cause lag since final captured images are generally fairly large.
-        */
+         */
         captureQueue.async {
-            let imageBuffer = CMSampleBufferGetImageBuffer(photoSampleBuffer!)!
+            let imageBuffer = CMSampleBufferGetImageBuffer(buffer)!
             let gpuImage = CIImage(cvImageBuffer: imageBuffer)
             
             let result = self.captureProcessor.process(image: gpuImage, shiftHueBy: self.hueShift)
