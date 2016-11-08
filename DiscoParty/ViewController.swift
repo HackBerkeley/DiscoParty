@@ -54,6 +54,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     */
     
     @IBOutlet weak var controlsView: UIView!
+    @IBOutlet weak var circleControl: CircleControl!
     
     #if IOS_SIMULATOR
     /*
@@ -122,7 +123,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
     
-    @IBAction func hueShiftChanged(_ sender: UISlider) {
+    @IBAction func hueShiftChanged(_ sender: CircleControl) {
         hueShift = sender.value
     }
     
@@ -212,7 +213,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
      Setup the controls view the appropriate graphic stylings.
     */
     private func configureControlsView() {
-        hueShift = 0.5
+        hueShift = 0
         controlsView.backgroundColor = UIColor.black
         controlsView.tintColor = UIColor.white
     }
@@ -236,7 +237,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         
         #if IOS_SIMULATOR
             
-            hueShift = 0.5
+            hueShift = 0.0
         
         #else
             //We need to ask the user's permission to record video if we don't already have it.

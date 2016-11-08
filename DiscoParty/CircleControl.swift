@@ -8,10 +8,12 @@
 
 import UIKit
 
+let twoPi = CGFloat(M_PI * 2)
+
 extension CGRect {
     
     var isSquare : Bool {
-        return width == height
+        return abs(width - height) < 0.1
     }
     
     var center : CGPoint {return CGPoint(x: midX, y: midY)}
@@ -21,7 +23,7 @@ extension CGRect {
      The rect must be a square.
     */
     func scaledCenter(scale s: CGFloat) -> CGRect {
-        //assert(isSquare)
+        assert(isSquare)
         let r = width / 2
         let shift = (r * (1 - s))
         return CGRect(x: origin.x + shift, y: origin.y + shift, width: width * s, height: height * s)
@@ -32,7 +34,7 @@ extension CGRect {
     */
     
     func centered(side: CGFloat) -> CGRect {
-        //assert(isSquare)
+        assert(isSquare)
         return scaledCenter(scale: side / width)
     }
     
@@ -41,7 +43,7 @@ extension CGRect {
     */
     
     func centered(delta: CGFloat) -> CGRect {
-        //assert(isSquare)
+        assert(isSquare)
         return centered(side: width + delta)
     }
     
@@ -85,9 +87,8 @@ extension CGPoint {
 
 class RainbowRingDrawer: NSObject, CALayerDelegate {
     func draw(_ layer: CALayer, in ctx: CGContext) {
-        let bounds = layer.bounds
+        let bounds = layer.bounds.squareInside()
         let center = bounds.center
-        let twoPi : CGFloat = 2 * CGFloat(M_PI)
         let r = bounds.width / 2
         
         //draw the rainbow by drawing colored lines from the center to the edge of the circle
@@ -133,16 +134,25 @@ private func generateRainbowRingLayer() -> CALayer {
  This control is made up of two layers, which the user rotates.
  */
 
-class CircleControl: UIView {
+class CircleControl: UIControl {
 
     //In radians
-    var rotation : CGFloat = 0 {
+    var rotation : CGFloat {
+        return CGFloat(value) * twoPi
+    }
+    
+    var value : Float = 0 {
         didSet {
-            outerRing.setAffineTransform(CGAffineTransform(rotationAngle: rotation))
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0)
+            outerRingContainer.transform = CATransform3DMakeRotation(rotation, 0, 0, 1)
+            CATransaction.commit()
         }
     }
     
     let (innerRing, outerRing) = (generateRainbowRingLayer(), generateRainbowRingLayer())
+    
+    let outerRingContainer = CALayer()
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -150,28 +160,22 @@ class CircleControl: UIView {
     }
     
     private func commonInitializer() {
-        for sub in [outerRing, innerRing] {
+        for sub in [outerRingContainer, innerRing] {
             layer.addSublayer(sub)
         }
         
-        //layer.needsDisplayOnBoundsChange = true
-        layer.delegate = self
+        outerRingContainer.addSublayer(outerRing)
         
-        layer.setNeedsLayout()
+        //letterbox is the square region in the middle
+        let squareBox = layer.bounds.squareInside()
+        outerRingContainer.frame = squareBox
+        outerRing.frame = outerRingContainer.bounds
+        innerRing.frame = squareBox.scaledCenter(scale: 0.66)
         
         //add a gesture recognizer to recognize the circular gesture
         let gest = UIPanGestureRecognizer(target: self, action: #selector(pan))
         
         addGestureRecognizer(gest)
-    }
-    
-    override func layoutSublayers(of layer: CALayer) {        
-        if layer == self.layer {
-            //letterbox is the square region in the middle
-            let squareBox = layer.bounds.squareInside()
-            outerRing.frame = squareBox
-            innerRing.frame = squareBox.scaledCenter(scale: 0.66)
-        }
     }
     
     var firstTouch      : CGPoint!
@@ -189,11 +193,25 @@ class CircleControl: UIView {
             let center = bounds.center
             
             //normalize each vector to the center
-            let (vec1, vec2) = ((center - firstTouch).normalized(), (center - location).normalized())
+            let (vec1, vec2) = (center - firstTouch, center - location)
             
-            let angle = acos(vec1 • vec2)
+            let angle = atan2(vec2.y, vec2.x) - atan2(vec1.y, vec1.x)
             
-            rotation = firstRotation + angle
+            var newRotation = firstRotation + angle
+            
+            //keep the rotation in bounds
+            
+            while newRotation < 0 {
+                newRotation += twoPi
+            }
+            
+            while newRotation > twoPi {
+                newRotation -= twoPi
+            }
+            
+            value = Float(newRotation / twoPi)
+            
+            sendActions(for: .valueChanged)
         default:
             break
         }
