@@ -100,7 +100,7 @@ class RainbowRingDrawer: NSObject, CALayerDelegate {
         
         while angle < twoPi {
             
-            let hue : CGFloat = angle / twoPi //hue is our progress through the circle
+            let hue : CGFloat = (angle / twoPi) + 0.25 //hue is our progress through the circle
             
             let color = UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
             

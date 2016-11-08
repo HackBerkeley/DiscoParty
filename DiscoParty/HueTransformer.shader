@@ -31,10 +31,10 @@ kernel vec4 coreImageKernel(sampler image, float rotateHue)
 	
 	vec3 hsl = rgb2hsv(rgb);
 	
-	hsl[0] += rotateHue;
+	hsl[0] -= rotateHue;
 	
-	while(hsl[0] > 1.0f) {
-		hsl[0] -= 1.0f;
+	while(hsl[0] < 0.0f) {
+		hsl[0] += 1.0f;
 	}
 	
 	rgb = hsv2rgb(hsl);
