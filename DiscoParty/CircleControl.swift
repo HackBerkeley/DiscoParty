@@ -161,9 +161,7 @@ fileprivate class RingSet: NSObject {
         let moveProportion = angleDifference / (twoPi / CGFloat(buckets))
         let dur = CFTimeInterval(moveProportion) * (animationDuration / 2)
         
-        UIView.animate(withDuration: dur, animations: {
-            self.rotation += self.angleToBucket
-        }, completion: completion)
+        self.rotation += self.angleToBucket
         
     }
     
@@ -329,16 +327,30 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
     private var firstTouch      : CGPoint!
     private var firstRotation   : CGFloat!
     
+    private var dynamics : UIDynamicItemBehavior?
+    private lazy var animator : UIDynamicAnimator = {
+        let result = UIDynamicAnimator(referenceView: self)
+        return result
+    }()
+    
     @objc private func pan(sender: UIPanGestureRecognizer) {
+        
+        let center = bounds.center
+        let location = sender.location(in: self)
+        
         switch (sender.state) {
         case .began:
+            //stop spinning
+            
+            if let dyn = dynamics {
+                
+            }
+            
             //when the pan first begins, record the touch location so we have a frame of reference
-            firstTouch = sender.location(in: self)
+            firstTouch = location
             firstRotation = rotation
         case .changed:
             //calculate the angle difference
-            let location = sender.location(in: self)
-            let center = bounds.center
             
             //normalize each vector to the center
             let (vec1, vec2) = (center - firstTouch, center - location)
@@ -351,6 +363,24 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
             
             sendActions(for: .valueChanged)
         case .ended:
+            
+            /*
+                     ^
+                     |
+        |
+                     |
+            */
+            
+            let vel = sender.velocity(in: self)
+            let radius = center - location
+            let motionRadius = radius + vel
+            
+            let angle = atan2(motionRadius.y, motionRadius.x) - atan2(radius.y, radius.x)
+            //keep spinning based on how fast we flicked
+            for set in ringSets {
+                dynamics.addAngularVelocity(angle, for: set.outerRing)
+            }
+            
             //if buckets, set the value
             if mode == .Bucket {
                 //snap the buckets ring to buckets
