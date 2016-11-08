@@ -9,6 +9,15 @@
 import Foundation
 import CoreImage
 
+extension CGRect {
+    /*
+     Gets the square inscribed in the rect.
+    */
+    func squareInside() -> CGRect {
+        return insetBy(dx: max(0, (width - height)/2), dy: max(0, (height - width)/2))
+    }
+}
+
 /*
  Each instance of ImageProcessor is not thread safe, however the class as a whole is.
  Create one instance of ImageProcessor for each thread.
@@ -55,7 +64,7 @@ class ImageProcessor {
         //crop the image to be square
         cropFilter.setValue(rotated, forKey: "inputImage")
         
-        let cropRect = rotated.extent.insetBy(dx: max(0, (rotated.extent.width - rotated.extent.height)/2), dy: max(0, (rotated.extent.height - rotated.extent.width)/2))
+        let cropRect = rotated.extent.squareInside()
         
         let vector = CIVector(cgRect: cropRect)
         

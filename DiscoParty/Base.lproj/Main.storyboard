@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="16B2555" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -32,12 +32,10 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="6GE-YJ-Nwq">
                                 <rect key="frame" x="0.0" y="375" width="375" height="292"/>
                                 <subviews>
-                                    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="lAw-3f-vOD">
-                                        <rect key="frame" x="6" y="131" width="363" height="31"/>
-                                        <connections>
-                                            <action selector="hueShiftChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="ycL-gJ-uGg"/>
-                                        </connections>
-                                    </slider>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QMG-e7-UAM" customClass="CircleControl" customModule="DiscoParty" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="0.0" width="375" height="292"/>
+                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    </view>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TN0-rl-I2i">
                                         <rect key="frame" x="328" y="12" width="35" height="35"/>
                                         <constraints>
@@ -64,13 +62,14 @@
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
-                                    <constraint firstItem="lAw-3f-vOD" firstAttribute="centerY" secondItem="6GE-YJ-Nwq" secondAttribute="centerY" id="IGg-ai-crE"/>
-                                    <constraint firstAttribute="trailing" secondItem="lAw-3f-vOD" secondAttribute="trailing" constant="8" id="PYT-Z2-pxB"/>
+                                    <constraint firstItem="QMG-e7-UAM" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" id="1F5-sh-4cq"/>
+                                    <constraint firstItem="QMG-e7-UAM" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" id="B6v-eh-TfS"/>
+                                    <constraint firstAttribute="bottom" secondItem="QMG-e7-UAM" secondAttribute="bottom" id="SmC-TB-7uL"/>
                                     <constraint firstItem="TN0-rl-I2i" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="Z68-Uz-u5i"/>
                                     <constraint firstAttribute="trailing" secondItem="TN0-rl-I2i" secondAttribute="trailing" constant="12" id="Zjg-pD-eNd"/>
                                     <constraint firstItem="7vJ-X2-DQc" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="i48-8y-eoF"/>
                                     <constraint firstItem="7vJ-X2-DQc" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" constant="12" id="o5U-sz-LuJ"/>
-                                    <constraint firstItem="lAw-3f-vOD" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" constant="8" id="x4M-bw-jTo"/>
+                                    <constraint firstAttribute="trailing" secondItem="QMG-e7-UAM" secondAttribute="trailing" id="vwe-d9-JxT"/>
                                 </constraints>
                             </view>
                         </subviews>

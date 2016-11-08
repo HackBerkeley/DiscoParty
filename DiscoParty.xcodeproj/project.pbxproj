@@ -17,6 +17,7 @@
 		A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */; };
 		A3C242F41DD053BA002757AE /* SimulatorGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C242F31DD053BA002757AE /* SimulatorGLView.swift */; };
 		A3C242F61DD05C35002757AE /* SingleBufferQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C242F51DD05C35002757AE /* SingleBufferQueue.swift */; };
+		A3C2430D1DD1161A002757AE /* CircleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C2430C1DD1161A002757AE /* CircleControl.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CwlMutex.swift; sourceTree = "<group>"; };
 		A3C242F31DD053BA002757AE /* SimulatorGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimulatorGLView.swift; sourceTree = "<group>"; };
 		A3C242F51DD05C35002757AE /* SingleBufferQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleBufferQueue.swift; sourceTree = "<group>"; };
+		A3C2430C1DD1161A002757AE /* CircleControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleControl.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 			children = (
 				A32D7FF71DCD92CE00D7BC17 /* AppDelegate.swift */,
 				A32D7FF91DCD92CE00D7BC17 /* ViewController.swift */,
+				A3C2430C1DD1161A002757AE /* CircleControl.swift */,
 				A3C242F51DD05C35002757AE /* SingleBufferQueue.swift */,
 				A3C242F31DD053BA002757AE /* SimulatorGLView.swift */,
 				A32D800B1DCDAACA00D7BC17 /* ImageProcessor.swift */,
@@ -157,6 +160,7 @@
 				A3C242F61DD05C35002757AE /* SingleBufferQueue.swift in Sources */,
 				A3C242F41DD053BA002757AE /* SimulatorGLView.swift in Sources */,
 				A32D800C1DCDAACA00D7BC17 /* ImageProcessor.swift in Sources */,
+				A3C2430D1DD1161A002757AE /* CircleControl.swift in Sources */,
 				A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */,
 				A32D7FF81DCD92CE00D7BC17 /* AppDelegate.swift in Sources */,
 			);
