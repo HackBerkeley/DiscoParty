@@ -89,7 +89,9 @@ class RainbowRingDrawer: NSObject, CALayerDelegate {
     func draw(_ layer: CALayer, in ctx: CGContext) {
         let bounds = layer.bounds.squareInside()
         let center = bounds.center
-        let r = bounds.width / 2
+        
+        let outerRadius = bounds.width / 2
+        let innerRadius = (outerRadius * 2/3) + 1
         
         //draw the rainbow by drawing colored lines from the center to the edge of the circle
         let inc : CGFloat = 0.005 //angle increment in radians
@@ -106,17 +108,14 @@ class RainbowRingDrawer: NSObject, CALayerDelegate {
             
             let color = UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
             
-            let radialPoint = center + CGPoint(x: r * cos(angle), y: r * sin(angle))
+            let outerPoint = center + CGPoint(x: outerRadius * cos(angle), y: outerRadius * sin(angle))
+            let innerPoint  = center + CGPoint(x: innerRadius * cos(angle), y: innerRadius * sin(angle))
             
             ctx.setStrokeColor(color.cgColor)
-            ctx.strokeLineSegments(between: [center, radialPoint])
+            ctx.strokeLineSegments(between: [innerPoint, outerPoint])
             
             angle += inc
         }
-        
-        //draw a black circle that fills up 2/3 of the ring plus one pixel
-        ctx.setFillColor(UIColor.black.cgColor)
-        ctx.fillEllipse(in: bounds.scaledCenter(scale: 2/3).centered(delta: 1))
     }
     
     static let shared = RainbowRingDrawer()
