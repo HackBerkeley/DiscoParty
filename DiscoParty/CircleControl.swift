@@ -100,7 +100,9 @@ class RainbowRingDrawer: NSObject, CALayerDelegate {
         
         while angle < twoPi {
             
-            let hue : CGFloat = (angle / twoPi) + 0.25 //hue is our progress through the circle
+            //hue is our progress through the circle
+            //add 0.25 so that red is at the top
+            let hue : CGFloat = (angle / twoPi) + 0.25
             
             let color = UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
             
@@ -134,7 +136,7 @@ private func generateRainbowRingLayer() -> CALayer {
  This control is made up of two layers, which the user rotates.
  */
 
-class CircleControl: UIControl {
+class CircleControl: UIControl, UIGestureRecognizerDelegate {
 
     //In radians
     var rotation : CGFloat {
@@ -173,9 +175,28 @@ class CircleControl: UIControl {
         innerRing.frame = squareBox.scaledCenter(scale: 0.66)
         
         //add a gesture recognizer to recognize the circular gesture
-        let gest = UIPanGestureRecognizer(target: self, action: #selector(pan))
+        let panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(pan))
+        panRecognizer.delegate = self
+        addGestureRecognizer(panRecognizer)
+    }
+    
+    /*
+     We don't want to pan if the user's finger isn't on the outer ring.
+     We know the outer ring is from 2/3 to the edge, so we can test if the touch is in the right by calculating its radius.
+    */
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        let location = touch.location(in: self)
+        let square = bounds.squareInside()
+        let center = square.center
         
-        addGestureRecognizer(gest)
+        //get a distance from touch to center
+        let radius = (center - location).magnitude
+        
+        let outerRingRadius = square.width / 2
+        
+        let ratio = radius / outerRingRadius
+        
+        return ratio > 0.25 && ratio < 1.1 //we'll give it an additional .1 for fat fingers
     }
     
     var firstTouch      : CGPoint!
