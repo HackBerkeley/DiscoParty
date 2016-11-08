@@ -12,144 +12,11 @@ fileprivate let centerProportion : CGFloat = 4/9
 fileprivate let animationDuration : CFTimeInterval = 0.5
 fileprivate let buckets = 12
 
-/*
- The ringset defines a pair of specturm rings or bucket rings.
- */
-fileprivate class RingSet: NSObject, CALayerDelegate {
-    let layer = CALayer()
-    
-    func generateRingLayer() -> CALayer {
-        let layer = CALayer()
-        layer.delegate = drawer
-        layer.needsDisplayOnBoundsChange = true
-        layer.contentsScale = UIScreen.main.scale //give the layer enough pixes for the retina screen
-        return layer
-    }
-    
-    let outerRingContainer = CALayer()
-    
-    lazy var innerRing : CALayer = self.generateRingLayer()
-    lazy var outerRing : CALayer = self.generateRingLayer()
-    
-    let drawer : CALayerDelegate
-    
-    init(drawer : CALayerDelegate) {
-        
-        self.drawer = drawer
-        
-        super.init()
-        
-        layer.addSublayer(outerRingContainer)
-        layer.addSublayer(innerRing)
-        
-        outerRingContainer.addSublayer(outerRing)
-    }
-    
-    private(set) var active = true
-    
-    
-    //Activation scales to 1
-    func activate(animate: Bool) {
-        active = true
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(animate ? animationDuration / 2 : 0)
-        layer.transform = CATransform3DMakeScale(1, 1, 1)
-        CATransaction.commit()
-    }
-    
-    //Deactivation scales to 2 while fading to black
-    //Then re-fades in the center at 4/9
-    func deactivate(animate: Bool) {
-        active = false
-        
-        if !animate {
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(0)
-            layer.transform = CATransform3DMakeScale(centerProportion, centerProportion, 1)
-            CATransaction.commit()
-            return
-        }
-        
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(animationDuration / 2)
-        
-        CATransaction.setCompletionBlock {
-            self.deactivate(animate: false)
-            
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(animationDuration / 2)
-            
-            self.layer.opacity = 1
-            
-            CATransaction.commit()
-        }
-        
-        layer.opacity = 0
-        
-        CATransaction.commit()
-    }
-    
-    /*
-     Call layout only once when the layer is added to a superlayer.
-    */
-    func layout() {
-        outerRingContainer.frame = layer.bounds
-        outerRing.frame = outerRingContainer.bounds
-        innerRing.frame = layer.bounds.centered(scale: 2/3)
-    }
-    
-    //0..2pi
-    var rotation : CGFloat = 0 {
-        didSet {
-            outerRingContainer.transform = CATransform3DMakeRotation(rotation, 0, 0, 1)
-        }
-    }
-    
-    /*
-     Snap rotation to the buckets animatedly, and return
-    */
-    func snapToBuckets(completion: (()->Void)?) {
-        CATransaction.begin()
-        
-        //the animation is consistent speed, not duration
-        //since the max difference is 2pi/buckets, that is our max distance
-        let angleDifference = abs(angleToBucket)
-        let moveProportion = angleDifference / (twoPi / CGFloat(buckets))
-        let dur = CFTimeInterval(moveProportion) * (animationDuration / 2)
-        
-        print(dur)
-        CATransaction.setAnimationDuration(dur)
-        
-        CATransaction.setCompletionBlock(completion)
-        
-        
-        print("\(rotation) -> \(rotation + angleToBucket)")
-        rotation += angleToBucket
-        
-        CATransaction.commit()
-    }
-    
-    /*
-     Return the angular distance to the closest bucket
-    */
-    var angleToBucket : CGFloat {
-        let prog = rotation / twoPi //rotation normalized to 0..1
-        let bucketBefore = Int(floor(prog * CGFloat(buckets)))
-        let bucketAfter = Int(ceil(prog * CGFloat(buckets)))
-        
-        let angleBefore = (CGFloat(bucketBefore) / CGFloat(buckets)) * twoPi
-        let angleAfter = (CGFloat(bucketAfter) / CGFloat(buckets)) * twoPi
-        
-        let leastAngle = rotation - angleBefore < angleAfter - rotation ? angleBefore : angleAfter
-        
-        return leastAngle - rotation
-    }
-}
-
-fileprivate class RainbowRingDrawer: NSObject, CALayerDelegate {
-    func draw(_ layer: CALayer, in ctx: CGContext) {
+fileprivate class RainbowRingView: UIView {
+    fileprivate override func draw(_ rect: CGRect) {
         let bounds = layer.bounds.squareInside()
         let center = bounds.center
+        let ctx = UIGraphicsGetCurrentContext()!
         
         let outerRadius = bounds.width / 2
         let innerRadius = (outerRadius * 2/3) + 1
@@ -178,14 +45,13 @@ fileprivate class RainbowRingDrawer: NSObject, CALayerDelegate {
             angle += inc
         }
     }
-    
-    static let shared = RainbowRingDrawer()
 }
 
-fileprivate class BucketDrawer: NSObject, CALayerDelegate {
-    func draw(_ layer: CALayer, in ctx: CGContext) {
+fileprivate class BucketsView: UIView {
+    fileprivate override func draw(_ rect: CGRect) {
         let bounds = layer.bounds.squareInside()
         let center = bounds.center
+        let ctx = UIGraphicsGetCurrentContext()!
         
         let outerRadius = bounds.width / 2
         let innerRadius = (outerRadius * 2/3) + 1
@@ -211,8 +77,111 @@ fileprivate class BucketDrawer: NSObject, CALayerDelegate {
             ctx.fillEllipse(in: bucket)
         }
     }
+}
+
+/*
+ The ringset defines a pair of specturm rings or bucket rings.
+ */
+fileprivate class RingSet: NSObject {
+    let view = UIView(frame: CGRect.zero)
     
-    static let shared = BucketDrawer()
+    lazy var innerRing : UIView = self.viewType.init(frame: CGRect.zero)
+    lazy var outerRing : UIView = self.viewType.init(frame: CGRect.zero)
+    
+    let viewType : UIView.Type
+    
+    init(viewType : UIView.Type) {
+        
+        self.viewType = viewType
+        
+        super.init()
+        
+        for ring in [innerRing, outerRing] {
+            view.addSubview(ring)
+            ring.backgroundColor = UIColor.clear
+        }
+    }
+    
+    private(set) var active = true
+    
+    
+    //Activation scales to 1
+    func activate(animate: Bool) {
+        active = true
+        UIView.animate(withDuration: animate ? animationDuration / 2 : 0) {
+            self.view.transform = CGAffineTransform.identity
+        }
+    }
+    
+    //Deactivation scales to 2 while fading to black
+    //Then re-fades in the center at 4/9
+    func deactivate(animate: Bool) {
+        active = false
+        
+        if !animate {
+            view.transform = CGAffineTransform(scaleX: centerProportion, y: centerProportion)
+            return
+        }
+        
+        UIView.animate(withDuration: animationDuration / 2, animations: {
+            self.view.alpha = 0
+        }, completion: {done in
+            self.deactivate(animate: false)
+            UIView.animate(withDuration: animationDuration / 2) {
+                self.deactivate(animate: false)
+                self.view.alpha = 1
+            }
+        })
+    }
+    
+    /*
+     Call layout only once when the view is added to a superview.
+    */
+    func layout() {
+        outerRing.frame = view.bounds
+        innerRing.frame = view.bounds.centered(scale: 2/3)
+    }
+    
+    //0..2pi
+    var rotation : CGFloat = 0 {
+        didSet {
+            outerRing.transform = CGAffineTransform(rotationAngle: rotation)
+        }
+    }
+    
+    /*
+     Snap rotation to the buckets animatedly, and return
+    */
+    func snapToBuckets(completion: ((Bool)->Void)?) {
+        CATransaction.begin()
+        
+        //the animation is consistent speed, not duration
+        //since the max difference is 2pi/buckets, that is our max distance
+        let angleDifference = abs(self.angleToBucket)
+        let moveProportion = angleDifference / (twoPi / CGFloat(buckets))
+        let dur = CFTimeInterval(moveProportion) * (animationDuration / 2)
+        
+        UIView.animate(withDuration: dur, animations: {
+            self.rotation += self.angleToBucket
+        }, completion: completion)
+        
+    }
+    
+    /*
+     Return the angular distance to the closest bucket
+    */
+    var angleToBucket : CGFloat {
+        let prog = rotation / twoPi //rotation normalized to 0..1
+        let bucketBefore = Int(floor(prog * CGFloat(buckets)))
+        let bucketAfter = Int(ceil(prog * CGFloat(buckets)))
+        
+        let angleBefore = (CGFloat(bucketBefore) / CGFloat(buckets)) * twoPi
+        let angleAfter = (CGFloat(bucketAfter) / CGFloat(buckets)) * twoPi
+        
+        let leastAngle = rotation - angleBefore < angleAfter - rotation ? angleBefore : angleAfter
+        
+        return leastAngle - rotation
+    }
 }
 
 /*
@@ -230,18 +199,15 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
     
     var value : Float = 0 {
         didSet {
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(0)
             for ringSet in ringSets {
                 ringSet.rotation = rotation
             }
-            CATransaction.commit()
         }
     }
     
     private func doBucketSnap() {
         spectrums.snapToBuckets(completion: nil)
-        buckets.snapToBuckets {
+        buckets.snapToBuckets {done in
             self.value = Float(self.buckets.rotation / twoPi)
         }
     }
@@ -294,8 +260,8 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
         }
     }
     
-    private let spectrums = RingSet(drawer: RainbowRingDrawer.shared)
-    private let buckets = RingSet(drawer: BucketDrawer.shared)
+    private let spectrums = RingSet(viewType: RainbowRingView.self)
+    private let buckets = RingSet(viewType: BucketsView.self)
     
     private var ringSets : [RingSet] {
         return [spectrums, buckets]
@@ -314,8 +280,8 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
         let square = layer.bounds.squareInside()
         
         for ringSet in ringSets {
-            layer.addSublayer(ringSet.layer)
-            ringSet.layer.frame = square
+            addSubview(ringSet.view)
+            ringSet.view.frame = square
             ringSet.layout()
             
             if ringSet != activeRingSet {
