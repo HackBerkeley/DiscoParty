@@ -10,6 +10,7 @@ import UIKit
 
 fileprivate let centerProportion : CGFloat = 4/9
 fileprivate let animationDuration : CFTimeInterval = 0.5
+fileprivate let buckets = 12
 
 fileprivate class RingSet: NSObject, CALayerDelegate {
     let layer = CALayer()
@@ -97,11 +98,48 @@ fileprivate class RingSet: NSObject, CALayerDelegate {
     //0..2pi
     var rotation : CGFloat = 0 {
         didSet {
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(0)
             outerRingContainer.transform = CATransform3DMakeRotation(rotation, 0, 0, 1)
-            CATransaction.commit()
         }
+    }
+    
+    /*
+     Snap rotation to the buckets animatedly, and return
+    */
+    func snapToBuckets(completion: (()->Void)?) {
+        CATransaction.begin()
+        
+        //the animation is consistent speed, not duration
+        //since the max difference is 2pi/buckets, that is our max distance
+        let angleDifference = abs(angleToBucket)
+        let moveProportion = angleDifference / (twoPi / CGFloat(buckets))
+        let dur = CFTimeInterval(moveProportion) * (animationDuration / 2)
+        
+        print(dur)
+        CATransaction.setAnimationDuration(dur)
+        
+        CATransaction.setCompletionBlock(completion)
+        
+        
+        print("\(rotation) -> \(rotation + angleToBucket)")
+        rotation += angleToBucket
+        
+        CATransaction.commit()
+    }
+    
+    /*
+     Return the angular distance to the closest bucket
+    */
+    var angleToBucket : CGFloat {
+        let prog = rotation / twoPi //rotation normalized to 0..1
+        let bucketBefore = Int(floor(prog * CGFloat(buckets)))
+        let bucketAfter = Int(ceil(prog * CGFloat(buckets)))
+        
+        let angleBefore = (CGFloat(bucketBefore) / CGFloat(buckets)) * twoPi
+        let angleAfter = (CGFloat(bucketAfter) / CGFloat(buckets)) * twoPi
+        
+        let leastAngle = rotation - angleBefore < angleAfter - rotation ? angleBefore : angleAfter
+        
+        return leastAngle - rotation
     }
 }
 
@@ -154,9 +192,6 @@ fileprivate class BucketDrawer: NSObject, CALayerDelegate {
         let bucketCenterRadius = (innerRadius + outerRadius) / 2
         let bucketDiameter = outerRadius - innerRadius
         
-        //Draw 10 buckets
-        let buckets = 12
-        
         for i in 0..<buckets {
             
             let prog = CGFloat(i) / CGFloat(buckets)
@@ -192,9 +227,18 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
     
     var value : Float = 0 {
         didSet {
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0)
             for ringSet in ringSets {
                 ringSet.rotation = rotation
             }
+            CATransaction.commit()
+        }
+    }
+    
+    private func doBucketSnap() {
+        buckets.snapToBuckets {
+            self.value = Float(self.buckets.rotation / twoPi)
         }
     }
     
@@ -213,6 +257,10 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
             } else {
                 ringSet.deactivate(animate: animated)
             }
+        }
+        
+        if mode == .Bucket {
+            doBucketSnap()
         }
     }
     
@@ -327,21 +375,17 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
             
             let angle = atan2(vec2.y, vec2.x) - atan2(vec1.y, vec1.x)
             
-            var newRotation = firstRotation + angle
-            
-            //keep the rotation in bounds
-            
-            while newRotation < 0 {
-                newRotation += twoPi
-            }
-            
-            while newRotation > twoPi {
-                newRotation -= twoPi
-            }
+            let newRotation = equivalentAngle(firstRotation + angle)
             
             value = Float(newRotation / twoPi)
             
             sendActions(for: .valueChanged)
+        case .ended:
+            //if buckets, set the value
+            if mode == .Bucket {
+                //snap the buckets ring to buckets
+                doBucketSnap()
+            }
         default:
             break
         }

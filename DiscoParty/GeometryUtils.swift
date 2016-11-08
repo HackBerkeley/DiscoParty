@@ -89,3 +89,21 @@ extension CGPoint {
         return self / magnitude
     }
 }
+
+/*
+ Given an angle, returns an equivalent angle 0...2pi
+ */
+func equivalentAngle(_ angle: CGFloat) -> CGFloat {
+    
+    var result = angle
+    
+    while result < 0 {
+        result += twoPi
+    }
+    
+    while result > twoPi {
+        result -= twoPi
+    }
+    
+    return result
+}
