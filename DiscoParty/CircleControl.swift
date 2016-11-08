@@ -12,6 +12,9 @@ fileprivate let centerProportion : CGFloat = 4/9
 fileprivate let animationDuration : CFTimeInterval = 0.5
 fileprivate let buckets = 12
 
+/*
+ The ringset defines a pair of specturm rings or bucket rings.
+ */
 fileprivate class RingSet: NSObject, CALayerDelegate {
     let layer = CALayer()
     
@@ -237,6 +240,7 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
     }
     
     private func doBucketSnap() {
+        spectrums.snapToBuckets(completion: nil)
         buckets.snapToBuckets {
             self.value = Float(self.buckets.rotation / twoPi)
         }
