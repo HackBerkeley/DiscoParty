@@ -21,7 +21,7 @@ extension CGRect {
      The rect must be a square.
     */
     func scaledCenter(scale s: CGFloat) -> CGRect {
-        assert(isSquare)
+        //assert(isSquare)
         let r = width / 2
         let shift = (r * (1 - s))
         return CGRect(x: origin.x + shift, y: origin.y + shift, width: width * s, height: height * s)
@@ -32,7 +32,7 @@ extension CGRect {
     */
     
     func centered(side: CGFloat) -> CGRect {
-        assert(isSquare)
+        //assert(isSquare)
         return scaledCenter(scale: side / width)
     }
     
@@ -41,14 +41,46 @@ extension CGRect {
     */
     
     func centered(delta: CGFloat) -> CGRect {
-        assert(isSquare)
+        //assert(isSquare)
         return centered(side: width + delta)
     }
     
 }
 
+/*
+ These operator overloads let us add and subtract CGPoints as vectors.
+ */
+
 func +(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
     return CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
+}
+
+func -(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
+    return CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
+}
+
+func /(lhs: CGPoint, rhs: CGFloat) -> CGPoint {
+    return CGPoint(x: lhs.x / rhs, y: lhs.y / rhs)
+}
+
+/*
+ This is a custom dot product operator.
+ */
+
+infix operator •: MultiplicationPrecedence
+
+func •(lhs: CGPoint, rhs: CGPoint) -> CGFloat {
+    return (lhs.x * rhs.x) + (lhs.y * rhs.y)
+}
+
+extension CGPoint {
+    var magnitude : CGFloat {
+        return sqrt(self • self)
+    }
+    
+    func normalized() -> CGPoint {
+        return self / magnitude
+    }
 }
 
 class RainbowRingDrawer: NSObject, CALayerDelegate {
@@ -103,13 +135,12 @@ private func generateRainbowRingLayer() -> CALayer {
 
 class CircleControl: UIView {
 
-    /*
-    // Only override draw() if you perform custom drawing.
-    // An empty implementation adversely affects performance during animation.
-    override func draw(_ rect: CGRect) {
-        // Drawing code
+    //In radians
+    var rotation : CGFloat = 0 {
+        didSet {
+            outerRing.setAffineTransform(CGAffineTransform(rotationAngle: rotation))
+        }
     }
-    */
     
     let (innerRing, outerRing) = (generateRainbowRingLayer(), generateRainbowRingLayer())
     
@@ -123,10 +154,15 @@ class CircleControl: UIView {
             layer.addSublayer(sub)
         }
         
-        layer.needsDisplayOnBoundsChange = true
+        //layer.needsDisplayOnBoundsChange = true
         layer.delegate = self
         
         layer.setNeedsLayout()
+        
+        //add a gesture recognizer to recognize the circular gesture
+        let gest = UIPanGestureRecognizer(target: self, action: #selector(pan))
+        
+        addGestureRecognizer(gest)
     }
     
     override func layoutSublayers(of layer: CALayer) {        
@@ -135,6 +171,31 @@ class CircleControl: UIView {
             let squareBox = layer.bounds.squareInside()
             outerRing.frame = squareBox
             innerRing.frame = squareBox.scaledCenter(scale: 0.66)
+        }
+    }
+    
+    var firstTouch      : CGPoint!
+    var firstRotation   : CGFloat!
+    
+    @objc private func pan(sender: UIPanGestureRecognizer) {
+        switch (sender.state) {
+        case .began:
+            //when the pan first begins, record the touch location so we have a frame of reference
+            firstTouch = sender.location(in: self)
+            firstRotation = rotation
+        case .changed:
+            //calculate the angle difference
+            let location = sender.location(in: self)
+            let center = bounds.center
+            
+            //normalize each vector to the center
+            let (vec1, vec2) = ((center - firstTouch).normalized(), (center - location).normalized())
+            
+            let angle = acos(vec1 • vec2)
+            
+            rotation = firstRotation + angle
+        default:
+            break
         }
     }
 
