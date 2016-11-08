@@ -26,13 +26,32 @@ extension CGRect {
         let shift = (r * (1 - s))
         return CGRect(x: origin.x + shift, y: origin.y + shift, width: width * s, height: height * s)
     }
+    
+    /*
+     Adjust the square's size to some number of pixels, keeping the center the same.
+    */
+    
+    func centered(side: CGFloat) -> CGRect {
+        assert(isSquare)
+        return scaledCenter(scale: side / width)
+    }
+    
+    /*
+     Adjusts the square's size by some number of pixels.
+    */
+    
+    func centered(delta: CGFloat) -> CGRect {
+        assert(isSquare)
+        return centered(side: width + delta)
+    }
+    
 }
 
 func +(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
     return CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
 }
 
-class RingDrawer: NSObject, CALayerDelegate {
+class RainbowRingDrawer: NSObject, CALayerDelegate {
     func draw(_ layer: CALayer, in ctx: CGContext) {
         let bounds = layer.bounds
         let center = bounds.center
@@ -60,19 +79,19 @@ class RingDrawer: NSObject, CALayerDelegate {
             angle += inc
         }
         
-        //draw the outer white circle in the bounds
-        ctx.setStrokeColor(UIColor.white.cgColor)
-        ctx.setLineWidth(1)
-        ctx.strokeEllipse(in: bounds.insetBy(dx: 1, dy: 1))
+        //draw a black circle that fills up 2/3 of the ring plus one pixel
+        ctx.setFillColor(UIColor.black.cgColor)
+        ctx.fillEllipse(in: bounds.scaledCenter(scale: 2/3).centered(delta: 1))
     }
     
-    static let shared = RingDrawer()
+    static let shared = RainbowRingDrawer()
 }
 
-private func generateRingLayer() -> CALayer {
+private func generateRainbowRingLayer() -> CALayer {
     let layer = CALayer()
-    layer.delegate = RingDrawer.shared
+    layer.delegate = RainbowRingDrawer.shared
     layer.needsDisplayOnBoundsChange = true
+    layer.contentsScale = UIScreen.main.scale
     return layer
 }
 
@@ -92,9 +111,7 @@ class CircleControl: UIView {
     }
     */
     
-
-    
-    let (innerRing, outerRing, centerRing) = (generateRingLayer(), generateRingLayer(), generateRingLayer())
+    let (innerRing, outerRing) = (generateRainbowRingLayer(), generateRainbowRingLayer())
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -102,7 +119,7 @@ class CircleControl: UIView {
     }
     
     private func commonInitializer() {
-        for sub in [outerRing, innerRing, centerRing] {
+        for sub in [outerRing, innerRing] {
             layer.addSublayer(sub)
         }
         
@@ -118,7 +135,6 @@ class CircleControl: UIView {
             let squareBox = layer.bounds.squareInside()
             outerRing.frame = squareBox
             innerRing.frame = squareBox.scaledCenter(scale: 0.66)
-            centerRing.frame = squareBox.scaledCenter(scale: 0.33)
         }
     }
 
