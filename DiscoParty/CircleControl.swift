@@ -8,84 +8,104 @@
 
 import UIKit
 
-let twoPi = CGFloat(M_PI * 2)
+fileprivate let centerProportion : CGFloat = 4/9
+fileprivate let animationDuration : CFTimeInterval = 0.5
 
-extension CGRect {
+fileprivate class RingSet: NSObject, CALayerDelegate {
+    let layer = CALayer()
     
-    var isSquare : Bool {
-        return abs(width - height) < 0.1
+    func generateRingLayer() -> CALayer {
+        let layer = CALayer()
+        layer.delegate = drawer
+        layer.needsDisplayOnBoundsChange = true
+        layer.contentsScale = UIScreen.main.scale //give the layer enough pixes for the retina screen
+        return layer
     }
     
-    var center : CGPoint {return CGPoint(x: midX, y: midY)}
+    let outerRingContainer = CALayer()
+    
+    lazy var innerRing : CALayer = self.generateRingLayer()
+    lazy var outerRing : CALayer = self.generateRingLayer()
+    
+    let drawer : CALayerDelegate
+    
+    init(drawer : CALayerDelegate) {
+        
+        self.drawer = drawer
+        
+        super.init()
+        
+        layer.addSublayer(outerRingContainer)
+        layer.addSublayer(innerRing)
+        
+        outerRingContainer.addSublayer(outerRing)
+    }
+    
+    private(set) var active = true
+    
+    
+    //Activation scales to 1
+    func activate(animate: Bool) {
+        active = true
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(animate ? animationDuration / 2 : 0)
+        layer.transform = CATransform3DMakeScale(1, 1, 1)
+        CATransaction.commit()
+    }
+    
+    //Deactivation scales to 2 while fading to black
+    //Then re-fades in the center at 4/9
+    func deactivate(animate: Bool) {
+        active = false
+        
+        if !animate {
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0)
+            layer.transform = CATransform3DMakeScale(centerProportion, centerProportion, 1)
+            CATransaction.commit()
+            return
+        }
+        
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(animationDuration / 2)
+        
+        CATransaction.setCompletionBlock {
+            self.deactivate(animate: false)
+            
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(animationDuration / 2)
+            
+            self.layer.opacity = 1
+            
+            CATransaction.commit()
+        }
+        
+        layer.opacity = 0
+        
+        CATransaction.commit()
+    }
     
     /*
-     Scales the rect by some value, keeping the center in the same place.
-     The rect must be a square.
+     Call layout only once when the layer is added to a superlayer.
     */
-    func scaledCenter(scale s: CGFloat) -> CGRect {
-        assert(isSquare)
-        let r = width / 2
-        let shift = (r * (1 - s))
-        return CGRect(x: origin.x + shift, y: origin.y + shift, width: width * s, height: height * s)
+    func layout() {
+        outerRingContainer.frame = layer.bounds
+        outerRing.frame = outerRingContainer.bounds
+        innerRing.frame = layer.bounds.centered(scale: 2/3)
     }
     
-    /*
-     Adjust the square's size to some number of pixels, keeping the center the same.
-    */
-    
-    func centered(side: CGFloat) -> CGRect {
-        assert(isSquare)
-        return scaledCenter(scale: side / width)
-    }
-    
-    /*
-     Adjusts the square's size by some number of pixels.
-    */
-    
-    func centered(delta: CGFloat) -> CGRect {
-        assert(isSquare)
-        return centered(side: width + delta)
-    }
-    
-}
-
-/*
- These operator overloads let us add and subtract CGPoints as vectors.
- */
-
-func +(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
-    return CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
-}
-
-func -(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
-    return CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
-}
-
-func /(lhs: CGPoint, rhs: CGFloat) -> CGPoint {
-    return CGPoint(x: lhs.x / rhs, y: lhs.y / rhs)
-}
-
-/*
- This is a custom dot product operator.
- */
-
-infix operator •: MultiplicationPrecedence
-
-func •(lhs: CGPoint, rhs: CGPoint) -> CGFloat {
-    return (lhs.x * rhs.x) + (lhs.y * rhs.y)
-}
-
-extension CGPoint {
-    var magnitude : CGFloat {
-        return sqrt(self • self)
-    }
-    
-    func normalized() -> CGPoint {
-        return self / magnitude
+    //0..2pi
+    var rotation : CGFloat = 0 {
+        didSet {
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0)
+            outerRingContainer.transform = CATransform3DMakeRotation(rotation, 0, 0, 1)
+            CATransaction.commit()
+        }
     }
 }
 
-class RainbowRingDrawer: NSObject, CALayerDelegate {
+fileprivate class RainbowRingDrawer: NSObject, CALayerDelegate {
     func draw(_ layer: CALayer, in ctx: CGContext) {
         let bounds = layer.bounds.squareInside()
         let center = bounds.center
@@ -121,12 +141,40 @@ class RainbowRingDrawer: NSObject, CALayerDelegate {
     static let shared = RainbowRingDrawer()
 }
 
-private func generateRainbowRingLayer() -> CALayer {
-    let layer = CALayer()
-    layer.delegate = RainbowRingDrawer.shared
-    layer.needsDisplayOnBoundsChange = true
-    layer.contentsScale = UIScreen.main.scale
-    return layer
+fileprivate class BucketDrawer: NSObject, CALayerDelegate {
+    func draw(_ layer: CALayer, in ctx: CGContext) {
+        let bounds = layer.bounds.squareInside()
+        let center = bounds.center
+        
+        let outerRadius = bounds.width / 2
+        let innerRadius = (outerRadius * 2/3) + 1
+        
+        //this is the radius that the bucket centers will track around
+        //it is between inner and outer radii
+        let bucketCenterRadius = (innerRadius + outerRadius) / 2
+        let bucketDiameter = outerRadius - innerRadius
+        
+        //Draw 10 buckets
+        let buckets = 12
+        
+        for i in 0..<buckets {
+            
+            let prog = CGFloat(i) / CGFloat(buckets)
+            
+            let hue = prog + 0.25 //so red is a the top
+            let angle = prog * twoPi
+            
+            let bucketCenter = center + CGPoint(x: bucketCenterRadius * cos(angle), y: bucketCenterRadius * sin(angle))
+            let bucket = CGRect(centered: bucketCenter, size: CGSize(width: bucketDiameter, height: bucketDiameter))
+            
+            let color = UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
+            ctx.setFillColor(color.cgColor)
+            
+            ctx.fillEllipse(in: bucket)
+        }
+    }
+    
+    static let shared = BucketDrawer()
 }
 
 /*
@@ -144,39 +192,94 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
     
     var value : Float = 0 {
         didSet {
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(0)
-            outerRingContainer.transform = CATransform3DMakeRotation(rotation, 0, 0, 1)
-            CATransaction.commit()
+            for ringSet in ringSets {
+                ringSet.rotation = rotation
+            }
         }
     }
     
-    let (innerRing, outerRing) = (generateRainbowRingLayer(), generateRainbowRingLayer())
+    enum Mode {
+        case Spectrum
+        case Bucket
+    }
     
-    let outerRingContainer = CALayer()
+    private(set) var mode : Mode = .Spectrum
+    
+    func set(mode: Mode, animated: Bool) {
+        self.mode = mode
+        for ringSet in ringSets {
+            if ringSet == activeRingSet {
+                ringSet.activate(animate: animated)
+            } else {
+                ringSet.deactivate(animate: animated)
+            }
+        }
+    }
+    
+    private var lastModeSwitch : CFTimeInterval?
+    
+    func switchMode(animated: Bool) {
+        
+        if let switchTime = lastModeSwitch, CACurrentMediaTime() - switchTime < animationDuration {
+            return
+        }
+        
+        lastModeSwitch = CACurrentMediaTime()
+        
+        if mode == .Bucket {
+            set(mode: .Spectrum, animated: animated)
+        } else {
+            set(mode: .Bucket, animated: animated)
+        }
+    }
+    
+    private var activeRingSet : RingSet {
+        switch mode {
+        case .Spectrum:
+            return spectrums
+        case .Bucket:
+            return buckets
+        }
+    }
+    
+    private let spectrums = RingSet(drawer: RainbowRingDrawer.shared)
+    private let buckets = RingSet(drawer: BucketDrawer.shared)
+    
+    private var ringSets : [RingSet] {
+        return [spectrums, buckets]
+    }
     
     override func awakeFromNib() {
         super.awakeFromNib()
         commonInitializer()
     }
     
+    let panRecognizer = UIPanGestureRecognizer()
+    let tapRecognizer = UITapGestureRecognizer()
+    
     private func commonInitializer() {
-        for sub in [outerRingContainer, innerRing] {
-            layer.addSublayer(sub)
+        
+        let square = layer.bounds.squareInside()
+        
+        for ringSet in ringSets {
+            layer.addSublayer(ringSet.layer)
+            ringSet.layer.frame = square
+            ringSet.layout()
+            
+            if ringSet != activeRingSet {
+                ringSet.deactivate(animate: false) //ringsets are active by default
+            }
         }
         
-        outerRingContainer.addSublayer(outerRing)
-        
-        //letterbox is the square region in the middle
-        let squareBox = layer.bounds.squareInside()
-        outerRingContainer.frame = squareBox
-        outerRing.frame = outerRingContainer.bounds
-        innerRing.frame = squareBox.scaledCenter(scale: 0.66)
-        
         //add a gesture recognizer to recognize the circular gesture
-        let panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(pan))
-        panRecognizer.delegate = self
+        panRecognizer.addTarget(self, action: #selector(pan))
+        panRecognizer.delegate = self //we're going to only let the recognizer work on the outer ring via shouldRecieveTouch
         addGestureRecognizer(panRecognizer)
+        
+        //add a gesture recognize to respond to a center tap to switch rings
+        tapRecognizer.addTarget(self, action: #selector(tapCenter))
+        tapRecognizer.delegate = self
+        addGestureRecognizer(tapRecognizer)
     }
     
     /*
@@ -195,11 +298,18 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
         
         let ratio = radius / outerRingRadius
         
-        return ratio > 0.25 && ratio < 1.1 //we'll give it an additional .1 for fat fingers
+        switch gestureRecognizer {
+        case panRecognizer:
+            return ratio > 0.25 && ratio < 1.1 //we'll give it an additional .1 for fat fingers
+        case tapRecognizer:
+            return ratio < centerProportion
+        default:
+            fatalError() //If a gesture recognizer isn't explicitly handled, throw an error
+        }
     }
     
-    var firstTouch      : CGPoint!
-    var firstRotation   : CGFloat!
+    private var firstTouch      : CGPoint!
+    private var firstRotation   : CGFloat!
     
     @objc private func pan(sender: UIPanGestureRecognizer) {
         switch (sender.state) {
@@ -234,6 +344,14 @@ class CircleControl: UIControl, UIGestureRecognizerDelegate {
             sendActions(for: .valueChanged)
         default:
             break
+        }
+    }
+    
+    @objc private func tapCenter(sender: UITapGestureRecognizer) {
+        //we only care when the tap is done, so state completed
+        if sender.state == .recognized {
+            //switch the mode
+            switchMode(animated: true)
         }
     }
 

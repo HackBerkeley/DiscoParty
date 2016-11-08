@@ -15,6 +15,7 @@
 		A32D800A1DCDAA7400D7BC17 /* HueTransformer.shader in Resources */ = {isa = PBXBuildFile; fileRef = A32D80091DCDAA7400D7BC17 /* HueTransformer.shader */; };
 		A32D800C1DCDAACA00D7BC17 /* ImageProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800B1DCDAACA00D7BC17 /* ImageProcessor.swift */; };
 		A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */; };
+		A37504651DD2618D00C94263 /* GeometryUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37504641DD2618D00C94263 /* GeometryUtils.swift */; };
 		A3C242F41DD053BA002757AE /* SimulatorGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C242F31DD053BA002757AE /* SimulatorGLView.swift */; };
 		A3C242F61DD05C35002757AE /* SingleBufferQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C242F51DD05C35002757AE /* SingleBufferQueue.swift */; };
 		A3C2430D1DD1161A002757AE /* CircleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C2430C1DD1161A002757AE /* CircleControl.swift */; };
@@ -31,6 +32,7 @@
 		A32D80091DCDAA7400D7BC17 /* HueTransformer.shader */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = HueTransformer.shader; sourceTree = "<group>"; };
 		A32D800B1DCDAACA00D7BC17 /* ImageProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageProcessor.swift; sourceTree = "<group>"; };
 		A32D800D1DCDB2FE00D7BC17 /* CwlMutex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CwlMutex.swift; sourceTree = "<group>"; };
+		A37504641DD2618D00C94263 /* GeometryUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeometryUtils.swift; sourceTree = "<group>"; };
 		A3C242F31DD053BA002757AE /* SimulatorGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimulatorGLView.swift; sourceTree = "<group>"; };
 		A3C242F51DD05C35002757AE /* SingleBufferQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleBufferQueue.swift; sourceTree = "<group>"; };
 		A3C2430C1DD1161A002757AE /* CircleControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleControl.swift; sourceTree = "<group>"; };
@@ -70,6 +72,7 @@
 				A32D7FF71DCD92CE00D7BC17 /* AppDelegate.swift */,
 				A32D7FF91DCD92CE00D7BC17 /* ViewController.swift */,
 				A3C2430C1DD1161A002757AE /* CircleControl.swift */,
+				A37504641DD2618D00C94263 /* GeometryUtils.swift */,
 				A3C242F51DD05C35002757AE /* SingleBufferQueue.swift */,
 				A3C242F31DD053BA002757AE /* SimulatorGLView.swift */,
 				A32D800B1DCDAACA00D7BC17 /* ImageProcessor.swift */,
@@ -159,6 +162,7 @@
 				A32D7FFA1DCD92CE00D7BC17 /* ViewController.swift in Sources */,
 				A3C242F61DD05C35002757AE /* SingleBufferQueue.swift in Sources */,
 				A3C242F41DD053BA002757AE /* SimulatorGLView.swift in Sources */,
+				A37504651DD2618D00C94263 /* GeometryUtils.swift in Sources */,
 				A32D800C1DCDAACA00D7BC17 /* ImageProcessor.swift in Sources */,
 				A3C2430D1DD1161A002757AE /* CircleControl.swift in Sources */,
 				A32D800E1DCDB2FE00D7BC17 /* CwlMutex.swift in Sources */,
