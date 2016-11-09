@@ -14,6 +14,20 @@ import UIKit
  */
 
 class CircleControl: UIControl {
+    
+    /*
+value         1 0->
+rotation    2pi 0->
+             _____
+            /     \
+           |       |
+0.75 3pi/2 |       | pi/2, 0.25
+           |       |
+            \_____/
+     
+              pi
+              0.5
+    */
 
     //The rotation of the outer circle in radians. We can compute this from the value.
     var rotation : CGFloat {
@@ -31,6 +45,7 @@ class CircleControl: UIControl {
      Creates two image views with the color ring image.
     */
     let (outerRing, innerRing) : (UIImageView, UIImageView) = {
+        
         let image = UIImage(named: "ring")!
         
         //This function generates the view
@@ -77,14 +92,25 @@ class CircleControl: UIControl {
         addGestureRecognizer(panRecognizer)
     }
     
+    /*
+     The pan works by calculating an angle delta from the initial touch.
+     
+     Hen
+    */
+    
     private var firstTouch      : CGPoint!
     private var firstRotation   : CGFloat!
     
     @objc private func pan(sender: UIPanGestureRecognizer) {
+        /*
+         The gesture recognizer (== panRecognizer above) has many different states.
+         The two we care about are the 'began' state and the 'changed' state.
+        */
         switch (sender.state) {
         case .began:
             //when the pan first begins, record the touch location so we have a frame of reference
             firstTouch = sender.location(in: self)
+            //also record the rotation so we can add or subtract to it based on how the finger moves
             firstRotation = rotation
         case .changed:
             let location = sender.location(in: self)
