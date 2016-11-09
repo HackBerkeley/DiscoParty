@@ -11,6 +11,10 @@ import UIKit
 /*
  This is the colored hue shift circle view.
  This control is made up of two layers, which the user rotates.
+ 
+ By subclassing UIControl, we inherit the action/target paradigm. So the user of our control can:
+ - Drag actions to controllers in the Storyboard editor.
+ - Used the addTarget(action:) method.
  */
 
 class CircleControl: UIControl {
@@ -37,6 +41,7 @@ rotation    2pi 0->
     //The value that our control represents 0...1
     var value : Float = 0 {
         didSet {
+            //when we set the value, make sure to update the control's visual state
             outerRing.transform = CGAffineTransform(rotationAngle: rotation)
         }
     }
@@ -94,8 +99,6 @@ rotation    2pi 0->
     
     /*
      The pan works by calculating an angle delta from the initial touch.
-     
-     Hen
     */
     
     private var firstTouch      : CGPoint!
