@@ -14,12 +14,6 @@ import AVFoundation
     import MetalKit
 #endif
 
-protocol ValuedControl {
-    var value : Float {get}
-}
-
-extension UISlider : ValuedControl {}
-
 /*
  Utility function to get camera inputs.
  */
@@ -129,7 +123,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     @IBAction func hueShiftChanged(_ sender: UIControl) {
-        hueShift = (sender as! ValuedControl).value
+        hueShift = sender.value(forKey: "value") as! Float
     }
     
     //Process the preview images on this queue

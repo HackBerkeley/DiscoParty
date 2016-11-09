@@ -55,13 +55,18 @@
                                             <action selector="flipCamera:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Nqa-Pt-nhy"/>
                                         </connections>
                                     </button>
-                                    <slider opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="7nX-sB-ltb">
-                                        <rect key="frame" x="117" y="155" width="118" height="31"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="YdD-d1-B6R">
+                                        <rect key="frame" x="6" y="131" width="363" height="31"/>
+                                        <connections>
+                                            <action selector="hueShiftChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="gei-P4-9Nw"/>
+                                        </connections>
                                     </slider>
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
+                                    <constraint firstAttribute="trailing" secondItem="YdD-d1-B6R" secondAttribute="trailing" constant="8" id="R6C-j7-rfD"/>
+                                    <constraint firstItem="YdD-d1-B6R" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" constant="8" id="YKN-SF-rUh"/>
+                                    <constraint firstItem="YdD-d1-B6R" firstAttribute="centerY" secondItem="6GE-YJ-Nwq" secondAttribute="centerY" id="YkV-fx-YGz"/>
                                     <constraint firstItem="TN0-rl-I2i" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="Z68-Uz-u5i"/>
                                     <constraint firstAttribute="trailing" secondItem="TN0-rl-I2i" secondAttribute="trailing" constant="12" id="Zjg-pD-eNd"/>
                                     <constraint firstItem="7vJ-X2-DQc" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="i48-8y-eoF"/>
