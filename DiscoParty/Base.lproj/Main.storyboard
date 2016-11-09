@@ -32,13 +32,6 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="6GE-YJ-Nwq">
                                 <rect key="frame" x="0.0" y="375" width="375" height="292"/>
                                 <subviews>
-                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QMG-e7-UAM" customClass="CircleControl" customModule="DiscoParty" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="0.0" width="375" height="292"/>
-                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
-                                        <connections>
-                                            <action selector="hueShiftChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="svi-7c-mEe"/>
-                                        </connections>
-                                    </view>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageWhenHighlighted="NO" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TN0-rl-I2i">
                                         <rect key="frame" x="328" y="12" width="35" height="35"/>
                                         <constraints>
@@ -62,17 +55,17 @@
                                             <action selector="flipCamera:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Nqa-Pt-nhy"/>
                                         </connections>
                                     </button>
+                                    <slider opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="7nX-sB-ltb">
+                                        <rect key="frame" x="117" y="155" width="118" height="31"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    </slider>
                                 </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
-                                    <constraint firstItem="QMG-e7-UAM" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" id="1F5-sh-4cq"/>
-                                    <constraint firstItem="QMG-e7-UAM" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" id="B6v-eh-TfS"/>
-                                    <constraint firstAttribute="bottom" secondItem="QMG-e7-UAM" secondAttribute="bottom" id="SmC-TB-7uL"/>
                                     <constraint firstItem="TN0-rl-I2i" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="Z68-Uz-u5i"/>
                                     <constraint firstAttribute="trailing" secondItem="TN0-rl-I2i" secondAttribute="trailing" constant="12" id="Zjg-pD-eNd"/>
                                     <constraint firstItem="7vJ-X2-DQc" firstAttribute="top" secondItem="6GE-YJ-Nwq" secondAttribute="top" constant="12" id="i48-8y-eoF"/>
                                     <constraint firstItem="7vJ-X2-DQc" firstAttribute="leading" secondItem="6GE-YJ-Nwq" secondAttribute="leading" constant="12" id="o5U-sz-LuJ"/>
-                                    <constraint firstAttribute="trailing" secondItem="QMG-e7-UAM" secondAttribute="trailing" id="vwe-d9-JxT"/>
                                 </constraints>
                             </view>
                         </subviews>
@@ -88,7 +81,6 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="circleControl" destination="QMG-e7-UAM" id="rOU-bq-kYN"/>
                         <outlet property="controlsView" destination="6GE-YJ-Nwq" id="DiU-ZI-Z5w"/>
                         <outlet property="pictureView" destination="FPm-s5-44I" id="14Q-Oz-2eA"/>
                     </connections>
