@@ -39,7 +39,17 @@
     {
       "size" : "60x60",
       "idiom" : "iphone",
-      "filename" : "DiscoParty@3x.png",
+      "filename" : "DiscoParty@3x-1.png",
+      "scale" : "3x"
+    },
+    {
+      "idiom" : "car",
+      "size" : "60x60",
+      "scale" : "2x"
+    },
+    {
+      "idiom" : "car",
+      "size" : "60x60",
       "scale" : "3x"
     }
   ],
