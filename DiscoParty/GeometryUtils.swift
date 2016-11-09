@@ -28,30 +28,6 @@ extension CGRect {
         let shift = (r * (1 - s))
         return CGRect(x: origin.x + shift, y: origin.y + shift, width: width * s, height: height * s)
     }
-    
-    /*
-     Adjust the square's size to some number of pixels, keeping the center the same.
-     */
-    
-    func centered(side: CGFloat) -> CGRect {
-        assert(isSquare)
-        return centered(scale: side / width)
-    }
-    
-    /*
-     Adjusts the square's size by some number of pixels.
-     */
-    
-    func centered(delta: CGFloat) -> CGRect {
-        assert(isSquare)
-        return centered(side: width + delta)
-    }
-    
-    init(centered: CGPoint, size: CGSize) {
-        origin = CGPoint(x: centered.x - (size.width / 2), y: centered.y - (size.height / 2))
-        self.size = size
-    }
-    
 }
 
 /*
@@ -64,30 +40,6 @@ func +(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
 
 func -(lhs: CGPoint, rhs: CGPoint) -> CGPoint {
     return CGPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
-}
-
-func /(lhs: CGPoint, rhs: CGFloat) -> CGPoint {
-    return CGPoint(x: lhs.x / rhs, y: lhs.y / rhs)
-}
-
-/*
- This is a custom dot product operator.
- */
-
-infix operator •: MultiplicationPrecedence
-
-func •(lhs: CGPoint, rhs: CGPoint) -> CGFloat {
-    return (lhs.x * rhs.x) + (lhs.y * rhs.y)
-}
-
-extension CGPoint {
-    var magnitude : CGFloat {
-        return sqrt(self • self)
-    }
-    
-    func normalized() -> CGPoint {
-        return self / magnitude
-    }
 }
 
 /*

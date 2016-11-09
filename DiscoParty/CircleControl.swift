@@ -32,7 +32,16 @@ class CircleControl: UIControl {
     */
     let (outerRing, innerRing) : (UIImageView, UIImageView) = {
         let image = UIImage(named: "ring")!
-        return (UIImageView(image: image), UIImageView(image: image))
+        
+        //This function generates the view
+        func generateRing() -> UIImageView {
+            let result = UIImageView(image: image)
+            result.backgroundColor = UIColor.clear
+            return result
+        }
+        
+        //We return 2 generated views, one is the outer ring, one is the inner ring
+        return (generateRing(), generateRing())
     }()
     
     /*
@@ -41,14 +50,26 @@ class CircleControl: UIControl {
     override func awakeFromNib() {
         super.awakeFromNib()
         
+        /*
+            Get the letterboxed square where we're going to place our view.
+            
+            square
+                |
+                V
+             _ ____ _
+            | |    | |
+            | |    | |
+            |_|____|_| <-bounds
+        */
         let square = layer.bounds.squareInside()
         
-        for view in [innerRing, outerRing] {
-            addSubview(view)
-            view.backgroundColor = UIColor.clear
-        }
+        //Add the rings into our view
+        addSubview(outerRing)
+        addSubview(innerRing)
         
+        //The outer ring sits in the square
         outerRing.frame = square
+        //The inner ring sits at 2/3 the size
         innerRing.frame = square.centered(scale: 2/3)
         
         //add a gesture recognizer to recognize the circular gesture
@@ -66,17 +87,36 @@ class CircleControl: UIControl {
             firstTouch = sender.location(in: self)
             firstRotation = rotation
         case .changed:
-            //calculate the angle difference
             let location = sender.location(in: self)
             let center = bounds.center
             
-            //normalize each vector to the center
+            /*
+                     firstTouch
+              ______*_______
+             |      ^       |
+             |  vec1|_ angle|
+             |      | |     |
+             |center*------>* location
+             |        vec2  |
+             |              |
+             |______________|
+             
+             It can be any angle, not just 90º
+            */
+            
             let (vec1, vec2) = (center - firstTouch, center - location)
             
             let angle = atan2(vec2.y, vec2.x) - atan2(vec1.y, vec1.x)
             
+            /*
+             Our new rotation is the rotation where we first touched plus how much we dragged.
+             equivalentAngle keeps the angle between 0..2pi
+            */
             let newRotation = equivalentAngle(firstRotation + angle)
             
+            /*
+             Since the max newRotation is 2pi, we can set value based on it.
+            */
             value = Float(newRotation / twoPi)
             
             /*
