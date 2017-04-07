@@ -8,7 +8,7 @@
 
 import UIKit
 
-let twoPi = CGFloat(M_PI * 2)
+let twoPi = CGFloat(Double.pi * 2)
 
 extension CGRect {
     

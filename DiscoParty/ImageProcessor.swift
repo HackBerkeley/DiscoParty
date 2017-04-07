@@ -46,7 +46,7 @@ class ImageProcessor {
         
         transformFilter.setValue(image, forKey: "inputImage")
         
-        let rotateTransform = CGAffineTransform(rotationAngle: -CGFloat(M_PI_2))
+        let rotateTransform = CGAffineTransform(rotationAngle: -CGFloat(Double.pi/2))
         
         if let target = targetSideLength {
             //set transform with rotation and scale

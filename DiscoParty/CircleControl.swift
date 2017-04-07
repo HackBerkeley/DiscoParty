@@ -81,7 +81,7 @@ rotation    2pi 0->
             | |    | |
             |_|____|_| <-bounds
         */
-        let square = layer.bounds.squareInside()
+        let square = bounds.squareInside()
         
         //Add the rings into our view
         addSubview(outerRing)
